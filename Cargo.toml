@@ -1,0 +1,41 @@
+[package]
+name = "kkcli"
+version = "0.1.0"
+authors = ["MrNerdHair <mrnerdhair@gmail.com>"]
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+anyhow = "1.0.58"
+base64 = "0.13.0"
+bitcoin = { version = "0.28.1", features = ["base64", "rand"] }
+bytes = "1.1.0"
+chrono = { version = "0.4.19", features = ["serde"] }
+clap = { version = "3.2.8", features = ["derive"] }
+crossterm = "0.24.0"
+eosio = "0.3.1"
+hex = { version = "0.4.3", features = ["serde"] }
+humantime = "2.1.0"
+kkcli_derive = { path = "./kkcli_derive" }
+konst = { version = "0.2.15", features = ["rust_1_55"] }
+lazy_static = "1.4.0"
+mode = "0.4.1"
+passterm = "1.1.6"
+primitive-types = "0.11.1"
+prost = { version = "0.10.4", default-features = false, features = ["prost-derive"] }
+prost-types = { version = "0.10.1", default-features = false }
+rand = "0.8.5"
+regex = "1.5.6"
+rusb = "0.9.1"
+rust-fsm = { version = "0.6.0", default-features = false, features = ["dsl"] }
+schemars = { version = "0.8.10", features = ["chrono"] }
+serde = { version = "1.0.138", features = ["derive"] }
+serde_json = "1.0.82"
+serde_with = { version = "1.14.0", features = ["hex", "base64"] }
+sha2 = "0.10.2"
+thiserror = "1.0.31"
+
+[build-dependencies]
+prost-build = "0.10.4"
+protoc-bin-vendored = "3.0.0"
