@@ -1,18 +1,14 @@
-#![recursion_limit = "256"]
-
 pub mod cli;
 pub mod messages;
-pub mod state_machine;
 pub mod transport;
 
 use crate::{
-    cli::{Cli, Command, CliCommand},
-    transport::UsbTransport,
+    cli::{Cli, CliDebugCommand, Subcommand},
+    transport::{DeviceProtocolAdapter, ProtocolAdapter, UsbTransport},
 };
 use anyhow::{anyhow, Result};
 use clap::Parser;
 use rusb::{Device, GlobalContext};
-use state_machine::TransportStateMachine;
 use std::panic;
 
 const DEVICE_IDS: &[(u16, u16)] = &[(0x2b24, 0x0001), (0x2b24, 0x0002)];
@@ -50,7 +46,7 @@ fn main() -> Result<()> {
         Err(x) => panic::resume_unwind(x),
     };
 
-    if let Command::List(_) = cli.command {
+    if let Subcommand::List(_) = cli.command {
         for device in list_devices().iter() {
             let device_desc = device.device_descriptor()?;
             let device_handle = device.open()?;
@@ -67,10 +63,24 @@ fn main() -> Result<()> {
         return Ok(());
     }
 
-    let transport = UsbTransport::new(get_device()?)?;
-    let mut state_machine = TransportStateMachine::new(&transport);
-    state_machine.verbose = cli.verbose;
-    let state_machine = state_machine;
+    let protocol_adapter = UsbTransport::new(get_device()?, 1).map(|x| {
+        let mut out = DeviceProtocolAdapter::new(x);
+        out.verbose = cli.verbose;
+        out
+    })?;
 
-    cli.handle(&state_machine)
+    let debug_protocol_adapter = UsbTransport::new(get_device()?, 2)
+        .map(|x| {
+            let mut out = DeviceProtocolAdapter::new(x);
+            out.verbose = cli.verbose;
+            out
+        })
+        .ok();
+
+    cli.handle_debug(
+        &protocol_adapter,
+        debug_protocol_adapter
+            .as_ref()
+            .map(|x| -> &dyn ProtocolAdapter { x }),
+    )
 }

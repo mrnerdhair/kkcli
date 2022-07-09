@@ -1,7 +1,7 @@
 use crate::{
     cli::{expect_message, CliCommand},
     messages::{self, Message},
-    state_machine::StateMachine,
+    transport::ProtocolAdapter,
 };
 use anyhow::Result;
 use clap::Args;
@@ -12,10 +12,10 @@ use core::time::Duration;
 pub struct GetFeatures;
 
 impl CliCommand for GetFeatures {
-    fn handle(self, state_machine: &dyn StateMachine) -> Result<()> {
+    fn handle(self, protocol_adapter: &dyn ProtocolAdapter) -> Result<()> {
         let features = expect_message!(
             Message::Features,
-            state_machine.send_and_handle(messages::GetFeatures::default().into())
+            protocol_adapter.send_and_handle(messages::GetFeatures::default().into())
         )?;
 
         if let Some(label) = features.label {

@@ -1,7 +1,7 @@
 use crate::{
     cli::{expect_success, CliCommand},
     messages,
-    state_machine::StateMachine,
+    transport::ProtocolAdapter,
 };
 use anyhow::Result;
 use clap::{Args, ArgAction::SetTrue};
@@ -22,8 +22,8 @@ pub struct Ping {
 }
 
 impl CliCommand for Ping {
-    fn handle(self, state_machine: &dyn StateMachine) -> Result<()> {
-        let resp = expect_success!(state_machine.send_and_handle(
+    fn handle(self, protocol_adapter: &dyn ProtocolAdapter) -> Result<()> {
+        let resp = expect_success!(protocol_adapter.send_and_handle(
             messages::Ping {
                 message: self.message.clone(),
                 button_protection: self.button_protection,

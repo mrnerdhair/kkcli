@@ -1,7 +1,7 @@
 use crate::{
     cli::{expect_success, CliCommand},
     messages,
-    state_machine::StateMachine,
+    transport::ProtocolAdapter,
 };
 use anyhow::Result;
 use clap::Args;
@@ -16,8 +16,8 @@ pub struct ApplyPolicy {
 }
 
 impl CliCommand for ApplyPolicy {
-    fn handle(self, state_machine: &dyn StateMachine) -> Result<()> {
-        expect_success!(state_machine.send_and_handle(
+    fn handle(self, protocol_adapter: &dyn ProtocolAdapter) -> Result<()> {
+        expect_success!(protocol_adapter.send_and_handle(
             messages::ApplyPolicies {
                 policy: vec![messages::PolicyType {
                     policy_name: Some(self.policy_name),

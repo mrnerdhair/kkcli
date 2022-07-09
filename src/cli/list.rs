@@ -1,4 +1,4 @@
-use crate::{cli::CliCommand, state_machine::StateMachine};
+use crate::{cli::CliCommand, transport::ProtocolAdapter};
 use anyhow::Result;
 use clap::Args;
 
@@ -7,7 +7,7 @@ use clap::Args;
 pub struct List;
 
 impl CliCommand for List {
-    fn handle(self, _state_machine: &dyn StateMachine) -> Result<()> {
+    fn handle(self, _state_machine: &dyn ProtocolAdapter) -> Result<()> {
         unreachable!();
     }
 }

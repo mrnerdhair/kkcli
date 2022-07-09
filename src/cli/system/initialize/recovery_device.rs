@@ -1,7 +1,7 @@
 use crate::{
     cli::{expect_success, parsers::TypedPossibleValuesParser, CliCommand},
     messages::{self, Message},
-    state_machine::StateMachine,
+    transport::ProtocolAdapter,
 };
 use anyhow::Result;
 use clap::{ArgAction::{SetTrue, SetFalse}, Args};
@@ -35,9 +35,9 @@ pub struct RecoveryDevice {
 }
 
 impl CliCommand for RecoveryDevice {
-    fn handle(self, state_machine: &dyn StateMachine) -> Result<()> {
+    fn handle(self, protocol_adapter: &dyn ProtocolAdapter) -> Result<()> {
         let mut printed_char_req_msg = false;
-        expect_success!(state_machine.send_and_handle_or(
+        expect_success!(protocol_adapter.send_and_handle_or(
             messages::RecoveryDevice {
                 word_count: Some(self.word_count),
                 passphrase_protection: self.passphrase_protection,

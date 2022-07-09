@@ -1,7 +1,7 @@
 use crate::{
     cli::{expect_field, expect_message, CliCommand},
     messages::{self, Message},
-    state_machine::StateMachine,
+    transport::ProtocolAdapter,
 };
 use anyhow::Result;
 use clap::Args;
@@ -12,10 +12,10 @@ use core::cmp::min;
 pub struct ListCoins;
 
 impl CliCommand for ListCoins {
-    fn handle(self, state_machine: &dyn StateMachine) -> Result<()> {
+    fn handle(self, protocol_adapter: &dyn ProtocolAdapter) -> Result<()> {
         let resp = expect_message!(
             Message::CoinTable,
-            state_machine.send(
+            protocol_adapter.send(
                 messages::GetCoinTable {
                     start: None,
                     end: None,
@@ -32,7 +32,7 @@ impl CliCommand for ListCoins {
             .flat_map(|start| {
                 let resp = expect_message!(
                     Message::CoinTable,
-                    state_machine.send(
+                    protocol_adapter.send(
                         messages::GetCoinTable {
                             start: Some(start),
                             end: Some(min(num_coins, start + chunk_size)),

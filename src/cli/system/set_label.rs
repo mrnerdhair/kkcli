@@ -2,7 +2,7 @@
 use crate::{
     cli::{expect_success, CliCommand},
     messages,
-    state_machine::StateMachine,
+    transport::ProtocolAdapter,
 };
 use anyhow::Result;
 use clap::Args;
@@ -15,11 +15,11 @@ pub struct SetLabel {
 }
 
 impl CliCommand for SetLabel {
-    fn handle(self, state_machine: &dyn StateMachine) -> Result<()> {
+    fn handle(self, protocol_adapter: &dyn ProtocolAdapter) -> Result<()> {
         let mut req = messages::ApplySettings::default();
         req.label = Some(self.label);
 
-        expect_success!(state_machine.send_and_handle(req.into()))?;
+        expect_success!(protocol_adapter.send_and_handle(req.into()))?;
 
         Ok(())
     }

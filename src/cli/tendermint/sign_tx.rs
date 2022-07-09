@@ -7,7 +7,7 @@ use crate::{
         CliCommand,
     },
     messages::{self, Message},
-    state_machine::StateMachine,
+    transport::ProtocolAdapter,
 };
 use anyhow::{anyhow, Result};
 use clap::Args;
@@ -17,7 +17,7 @@ use schemars::schema_for;
 #[derive(Debug, Clone, Args)]
 pub struct TendermintSignTx {
     /// BIP-32 path to source address
-    #[clap(value_parser = Bip32PathParser, default_value = "m/44'/118'/0'/0/0")]
+    #[clap(short = 'n', long, value_parser = Bip32PathParser, default_value = "m/44'/118'/0'/0/0")]
     address: Bip32Path,
     /// JSON-encoded tendermint tx to sign, or the path to a file containing one
     #[clap(long, value_parser = SerdeJsonFileOrLiteralParser::<Transaction>::new(), long_help(Some(&*Box::leak(serde_json::to_string_pretty(&schema_for!(Transaction)).unwrap().into_boxed_str()))))]
@@ -25,15 +25,12 @@ pub struct TendermintSignTx {
 }
 
 impl CliCommand for TendermintSignTx {
-    fn handle(self, state_machine: &dyn StateMachine) -> Result<()> {
-        println!("{:#?}", self.tx);
-        println!("{}", serde_json::to_string_pretty(&self.tx)?);
-
+    fn handle(self, protocol_adapter: &dyn ProtocolAdapter) -> Result<()> {
         let mut msgs = self.tx.msg.to_vec();
         msgs.reverse();
         let resp = expect_message!(
             Message::TendermintSignedTx,
-            state_machine.send_and_handle_or(
+            protocol_adapter.send_and_handle_or(
                 messages::TendermintSignTx {
                     address_n: self.address.into(),
                     chain_id: Some(self.tx.chain_id),
@@ -68,8 +65,8 @@ impl CliCommand for TendermintSignTx {
             )
         )?;
 
-        println!("{:?}", expect_field!(resp.public_key)?);
-        println!("{:?}", expect_field!(resp.signature)?);
+        println!("Public Key:\t{}", hex::encode(expect_field!(resp.public_key)?));
+        println!("Signature:\t{}", hex::encode(expect_field!(resp.signature)?));
 
         Ok(())
     }

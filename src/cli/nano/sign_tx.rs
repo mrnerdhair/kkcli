@@ -1,7 +1,7 @@
 use crate::{
-    cli::{expect_message, parsers::{Bip32PathParser, HexParser32}, types::Bip32Path, CliCommand},
+    cli::{expect_message, expect_field, parsers::{Bip32PathParser, HexParser32}, types::Bip32Path, CliCommand},
     messages::{self, Message},
-    state_machine::StateMachine,
+    transport::ProtocolAdapter,
 };
 use anyhow::Result;
 use clap::{builder::ArgGroup, Args};
@@ -13,7 +13,7 @@ pub struct NanoSignTx {
     #[clap(short, long)]
     coin_name: Option<String>,
     /// BIP-32 path to source address
-    #[clap(value_parser = Bip32PathParser, default_value = "m/44'/165'/0'")]
+    #[clap(short = 'n', long, value_parser = Bip32PathParser, default_value = "m/44'/165'/0'")]
     address: Bip32Path,
     /// Current account top block parent block hash
     #[clap(long, value_parser = HexParser32, requires_all(&["top-parent-link", "top-parent-representative", "top-parent-balance"]))]
@@ -45,10 +45,10 @@ pub struct NanoSignTx {
 }
 
 impl CliCommand for NanoSignTx {
-    fn handle(self, state_machine: &dyn StateMachine) -> Result<()> {
+    fn handle(self, protocol_adapter: &dyn ProtocolAdapter) -> Result<()> {
         let resp = expect_message!(
             Message::NanoSignedTx,
-            state_machine.send_and_handle(
+            protocol_adapter.send_and_handle(
                 messages::NanoSignTx {
                     address_n: self.address.into(),
                     coin_name: self.coin_name,
@@ -70,7 +70,9 @@ impl CliCommand for NanoSignTx {
             )
         )?;
 
-        println!("{:?}", resp);
+        
+        println!("Signature:\t{}", hex::encode(expect_field!(resp.signature)?));
+        println!("Block Hash:\t{}", hex::encode(expect_field!(resp.block_hash)?));
 
         Ok(())
     }

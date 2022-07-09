@@ -1,89 +1,47 @@
+pub mod binance;
 pub mod cosmos;
 pub mod eos;
 pub mod ethereum;
 pub mod list;
+mod macros;
 pub mod nano;
 pub mod parsers;
+pub mod ripple;
 pub mod system;
 pub mod tendermint;
 pub mod thorchain;
 pub mod types;
 pub mod utxo;
 
-use self::{
-    cosmos::{CosmosGetAddress, CosmosSignTx},
-    eos::{EosGetPublicKey, EosSignTx},
-    ethereum::{EthereumGetAddress, EthereumSignTx},
-    list::List,
-    nano::{NanoGetAddress, NanoSignTx},
-    system::{
-        info::{GetEntropy, GetFeatures, GetPublicKey, ListCoins, Ping},
-        initialize::{LoadDevice, RecoveryDevice, ResetDevice},
-        ApplyPolicy, ChangePin, CipherKeyValue, ClearSession, FirmwareUpdate, SetLabel, WipeDevice,
-    },
-    tendermint::{TendermintGetAddress, TendermintSignTx},
-    thorchain::{ThorchainGetAddress, ThorchainSignTx},
-    utxo::{GetAddress, SignMessage, VerifyMessage},
-};
-use crate::{messages, state_machine::StateMachine};
+use binance::*;
+use cosmos::*;
+use eos::*;
+use ethereum::*;
+use list::*;
+pub(crate) use macros::*;
+use nano::*;
+use ripple::*;
+use system::*;
+use tendermint::*;
+use thorchain::*;
+use utxo::*;
+
+use crate::transport::ProtocolAdapter;
 use anyhow::Result;
-use clap::{ArgAction::SetTrue, Parser, Subcommand};
-
-macro_rules! expect_message {
-    ($path:path, $target:expr$(,)*) => {
-        match $target {
-            Ok(x) => match x {
-                $path(y) => Ok(y),
-                y => Err(::anyhow::anyhow!("unexpected message ({:?})", y)),
-            },
-            Err(x) => Err(x),
-        }
-    };
-}
-pub(crate) use expect_message;
-
-macro_rules! expect_success {
-    ($target:expr$(,)*) => {
-        crate::cli::expect_message!(crate::messages::Message::Success, $target).map(|x| {
-            println!("Success: {}", x.message());
-            x
-        })
-    };
-}
-pub(crate) use expect_success;
-
-macro_rules! expect_field {
-    ($target:ident.$field:ident) => {{
-        #[derive(Clone, Copy, Default)]
-        struct TypeRef<T>(::core::marker::PhantomData<*const T>);
-        impl<T> TypeRef<T> {
-            const fn from_ref(_: &T) -> Self {
-                Self(::core::marker::PhantomData)
-            }
-            fn type_name(&self) -> &'static str {
-                ::core::any::type_name::<T>()
-            }
-            fn type_ident(&self) -> &'static str {
-                let type_name = self.type_name();
-                // using konst here means we're ready when https://github.com/rust-lang/rust/issues/63084 is fixed
-                ::konst::option::unwrap_or!(::konst::string::rfind_skip(type_name, "::"), type_name)
-            }
-        }
-
-        let type_ref = TypeRef::from_ref(&$target);
-        $target.$field.as_ref().ok_or_else(|| {
-            ::anyhow::anyhow!(
-                "expected {} field in {} message",
-                "$field",
-                type_ref.type_ident(),
-            )
-        })
-    }};
-}
-pub(crate) use expect_field;
+use clap::{ArgAction::SetTrue, Parser};
 
 pub trait CliCommand {
-    fn handle(self, state_machine: &dyn StateMachine) -> Result<()>;
+    fn handle(self, protocol_adapter: &dyn ProtocolAdapter) -> Result<()>;
+}
+
+pub trait CliDebugCommand {
+    fn handle_debug(self, protocol_adapter: &dyn ProtocolAdapter, debug_protocol_adapter: Option<&dyn ProtocolAdapter>) -> Result<()>;
+}
+
+impl<T: CliCommand> CliDebugCommand for T {
+    fn handle_debug(self, protocol_adapter: &dyn ProtocolAdapter, _: Option<&dyn ProtocolAdapter>) -> Result<()> {
+        self.handle(protocol_adapter)
+    }
 }
 
 /// Command line tool for working with KeepKey devices
@@ -114,83 +72,49 @@ pub struct Cli {
     #[clap(short, long, default_value_t = false)]
     pub auto_button: bool,*/
     #[clap(subcommand)]
-    pub command: Command,
+    pub command: Subcommand,
 }
 
-#[derive(Subcommand, Debug, Clone)]
-#[clap(disable_help_subcommand = true, dont_collapse_args_in_usage = true)]
-pub enum Command {
-    List(List),
-    Ping(Ping),
-    GetFeatures(GetFeatures),
-    ListCoins(ListCoins),
-    SetLabel(SetLabel),
-    ChangePin(ChangePin),
-    ApplyPolicy(ApplyPolicy),
-    GetEntropy(GetEntropy),
-    ClearSession(ClearSession),
-    WipeDevice(WipeDevice),
-    RecoveryDevice(RecoveryDevice),
-    LoadDevice(LoadDevice),
-    ResetDevice(ResetDevice),
-    FirmwareUpdate(FirmwareUpdate),
-    CipherKeyValue(CipherKeyValue),
-    GetPublicKey(GetPublicKey),
-    GetAddress(GetAddress),
-    SignMessage(SignMessage),
-    VerifyMessage(VerifyMessage),
-    EthereumGetAddress(EthereumGetAddress),
-    EthereumSignTx(EthereumSignTx),
-    EosGetPublicKey(EosGetPublicKey),
-    EosSignTx(EosSignTx),
-    NanoGetAddress(NanoGetAddress),
-    NanoSignTx(NanoSignTx),
-    TendermintGetAddress(TendermintGetAddress),
-    TendermintSignTx(TendermintSignTx),
-    CosmosGetAddress(CosmosGetAddress),
-    CosmosSignTx(CosmosSignTx),
-    ThorchainGetAddress(ThorchainGetAddress),
-    ThorchainSignTx(ThorchainSignTx),
-}
-
-impl CliCommand for Cli {
-    fn handle(self, state_machine: &dyn StateMachine) -> Result<()> {
-        state_machine.send(messages::Initialize::default().into())?;
-
-        match self.command {
-            Command::List(cmd) => cmd.handle(state_machine)?,
-            Command::GetEntropy(cmd) => cmd.handle(state_machine)?,
-            Command::ListCoins(cmd) => cmd.handle(state_machine)?,
-            Command::Ping(cmd) => cmd.handle(state_machine)?,
-            Command::SetLabel(cmd) => cmd.handle(state_machine)?,
-            Command::ChangePin(cmd) => cmd.handle(state_machine)?,
-            Command::ApplyPolicy(cmd) => cmd.handle(state_machine)?,
-            Command::WipeDevice(cmd) => cmd.handle(state_machine)?,
-            Command::ClearSession(cmd) => cmd.handle(state_machine)?,
-            Command::RecoveryDevice(cmd) => cmd.handle(state_machine)?,
-            Command::FirmwareUpdate(cmd) => cmd.handle(state_machine)?,
-            Command::LoadDevice(cmd) => cmd.handle(state_machine)?,
-            Command::ResetDevice(cmd) => cmd.handle(state_machine)?,
-            Command::CipherKeyValue(cmd) => cmd.handle(state_machine)?,
-            Command::GetPublicKey(cmd) => cmd.handle(state_machine)?,
-            Command::GetFeatures(cmd) => cmd.handle(state_machine)?,
-            Command::GetAddress(cmd) => cmd.handle(state_machine)?,
-            Command::SignMessage(cmd) => cmd.handle(state_machine)?,
-            Command::VerifyMessage(cmd) => cmd.handle(state_machine)?,
-            Command::EthereumGetAddress(cmd) => cmd.handle(state_machine)?,
-            Command::EthereumSignTx(cmd) => cmd.handle(state_machine)?,
-            Command::EosGetPublicKey(cmd) => cmd.handle(state_machine)?,
-            Command::EosSignTx(cmd) => cmd.handle(state_machine)?,
-            Command::NanoGetAddress(cmd) => cmd.handle(state_machine)?,
-            Command::NanoSignTx(cmd) => cmd.handle(state_machine)?,
-            Command::TendermintGetAddress(cmd) => cmd.handle(state_machine)?,
-            Command::TendermintSignTx(cmd) => cmd.handle(state_machine)?,
-            Command::CosmosGetAddress(cmd) => cmd.handle(state_machine)?,
-            Command::CosmosSignTx(cmd) => cmd.handle(state_machine)?,
-            Command::ThorchainGetAddress(cmd) => cmd.handle(state_machine)?,
-            Command::ThorchainSignTx(cmd) => cmd.handle(state_machine)?,
-        }
-
-        Ok(())
-    }
+use_cli_subcommands! {
+    List,
+    Ping,
+    GetFeatures,
+    ListCoins,
+    SetLabel,
+    ChangePin,
+    ApplyPolicy,
+    GetEntropy,
+    ClearSession,
+    WipeDevice,
+    RecoveryDevice,
+    LoadDevice,
+    ResetDevice,
+    FirmwareUpdate,
+    CipherKeyValue,
+    GetPublicKey,
+    GetAddress,
+    SignMessage,
+    VerifyMessage,
+    EthereumGetAddress,
+    EthereumSignTx,
+    EosGetPublicKey,
+    EosSignTx,
+    NanoGetAddress,
+    NanoSignTx,
+    TendermintGetAddress,
+    TendermintSignTx,
+    CosmosGetAddress,
+    CosmosSignTx,
+    ThorchainGetAddress,
+    ThorchainSignTx,
+    EthereumSignMessage,
+    EthereumVerifyMessage,
+    BinanceGetAddress,
+    BinanceSignTx,
+    DebugLinkGetState,
+    DebugLinkFlashDump,
+    DebugLinkFillConfig,
+    SignIdentity,
+    RippleGetAddress,
+    RippleSignTx,
 }

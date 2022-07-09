@@ -1,7 +1,7 @@
 use crate::{
     cli::{expect_success, parsers::XprvParser, CliCommand},
     messages,
-    state_machine::StateMachine,
+    transport::ProtocolAdapter,
 };
 use anyhow::Result;
 use bitcoin::util::bip32::ExtendedPrivKey;
@@ -40,8 +40,8 @@ pub struct LoadDevice {
 }
 
 impl CliCommand for LoadDevice {
-    fn handle(self, state_machine: &dyn StateMachine) -> Result<()> {
-        expect_success!(state_machine.send_and_handle(
+    fn handle(self, protocol_adapter: &dyn ProtocolAdapter) -> Result<()> {
+        expect_success!(protocol_adapter.send_and_handle(
             messages::LoadDevice {
                 mnemonic: self.mnemonic,
                 node: self.xprv.map(|x| messages::HdNodeType {

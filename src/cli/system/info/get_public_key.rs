@@ -6,7 +6,7 @@ use crate::{
         CliCommand,
     },
     messages::{self, Message},
-    state_machine::StateMachine,
+    transport::ProtocolAdapter,
 };
 use anyhow::Result;
 use clap::{ArgAction::SetTrue, Args};
@@ -19,6 +19,7 @@ pub struct GetPublicKey {
     address: Bip32Path,
     #[clap(long)]
     ecdsa_curve_name: Option<String>,
+    /// Confirm address on device screen
     #[clap(short = 'd', long, action = SetTrue)]
     show_display: Option<bool>,
     #[clap(short, long)]
@@ -28,10 +29,10 @@ pub struct GetPublicKey {
 }
 
 impl CliCommand for GetPublicKey {
-    fn handle(self, state_machine: &dyn StateMachine) -> Result<()> {
+    fn handle(self, protocol_adapter: &dyn ProtocolAdapter) -> Result<()> {
         let resp = expect_message!(
             Message::PublicKey,
-            state_machine.send_and_handle(
+            protocol_adapter.send_and_handle(
                 messages::GetPublicKey {
                     address_n: self.address.into(),
                     ecdsa_curve_name: self.ecdsa_curve_name,

@@ -6,7 +6,7 @@ use crate::{
         CliCommand,
     },
     messages::{self, Message},
-    state_machine::StateMachine,
+    transport::ProtocolAdapter,
 };
 use anyhow::Result;
 use clap::{ArgAction::SetTrue, Args};
@@ -15,19 +15,20 @@ use clap::{ArgAction::SetTrue, Args};
 #[derive(Debug, Clone, Args)]
 pub struct EosGetPublicKey {
     /// BIP-32 path to key
-    #[clap(value_parser = Bip32PathParser, default_value = "m/44'/194'/0'/0/0")]
+    #[clap(short = 'n', long, value_parser = Bip32PathParser, default_value = "m/44'/194'/0'/0/0")]
     address: Bip32Path,
     #[clap(short = 'd', long, action = SetTrue)]
+    /// Confirm address on device screen
     show_display: Option<bool>,
     #[clap(short, long, value_enum)]
     kind: Option<EosPublicKeyKind>,
 }
 
 impl CliCommand for EosGetPublicKey {
-    fn handle(self, state_machine: &dyn StateMachine) -> Result<()> {
+    fn handle(self, protocol_adapter: &dyn ProtocolAdapter) -> Result<()> {
         let resp = expect_message!(
             Message::EosPublicKey,
-            state_machine.send_and_handle(
+            protocol_adapter.send_and_handle(
                 messages::EosGetPublicKey {
                     address_n: self.address.into(),
                     show_display: self.show_display,

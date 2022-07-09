@@ -1,7 +1,7 @@
 use crate::{
     cli::{expect_message, CliCommand},
     messages::{self, Message},
-    state_machine::StateMachine,
+    transport::ProtocolAdapter,
 };
 use anyhow::Result;
 use clap::Args;
@@ -13,10 +13,10 @@ pub struct GetEntropy {
 }
 
 impl CliCommand for GetEntropy {
-    fn handle(self, state_machine: &dyn StateMachine) -> Result<()> {
+    fn handle(self, protocol_adapter: &dyn ProtocolAdapter) -> Result<()> {
         let resp = expect_message!(
             Message::Entropy,
-            state_machine.send_and_handle(messages::GetEntropy { size: self.size }.into())
+            protocol_adapter.send_and_handle(messages::GetEntropy { size: self.size }.into())
         )?;
         println!("{}", hex::encode(resp.entropy));
 

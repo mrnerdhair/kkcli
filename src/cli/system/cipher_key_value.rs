@@ -6,7 +6,7 @@ use crate::{
         CliCommand,
     },
     messages::{self, Message},
-    state_machine::StateMachine,
+    transport::ProtocolAdapter,
 };
 use anyhow::Result;
 use clap::{ArgAction::SetTrue, Args};
@@ -37,10 +37,10 @@ pub struct CipherKeyValue {
 }
 
 impl CliCommand for CipherKeyValue {
-    fn handle(self, state_machine: &dyn StateMachine) -> Result<()> {
+    fn handle(self, protocol_adapter: &dyn ProtocolAdapter) -> Result<()> {
         let resp = expect_message!(
             Message::CipheredKeyValue,
-            state_machine.send_and_handle(
+            protocol_adapter.send_and_handle(
                 messages::CipherKeyValue {
                     address_n: self.address.into(),
                     key: Some(self.key),

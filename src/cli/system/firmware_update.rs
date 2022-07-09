@@ -1,7 +1,7 @@
 use crate::{
     cli::{expect_success, CliCommand},
     messages,
-    state_machine::StateMachine,
+    transport::ProtocolAdapter,
 };
 use anyhow::Result;
 use clap::{ArgAction::SetTrue, Args};
@@ -17,18 +17,18 @@ pub struct FirmwareUpdate {
 }
 
 impl CliCommand for FirmwareUpdate {
-    fn handle(self, state_machine: &dyn StateMachine) -> Result<()> {
+    fn handle(self, protocol_adapter: &dyn ProtocolAdapter) -> Result<()> {
         let payload = std::fs::read(self.file_path)?;
 
         if !self.skip_erase {
             println!("Erasing firmware...");
             expect_success!(
-                state_machine.send_and_handle(messages::FirmwareErase::default().into()),
+                protocol_adapter.send_and_handle(messages::FirmwareErase::default().into()),
             )?;
         }
 
         println!("Uploading firmware...");
-        expect_success!(state_machine.send_and_handle(
+        expect_success!(protocol_adapter.send_and_handle(
             messages::FirmwareUpload {
                 payload_hash: Sha256::digest(&payload).to_vec(),
                 payload,

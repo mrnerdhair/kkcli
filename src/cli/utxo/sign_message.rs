@@ -6,7 +6,7 @@ use crate::{
         CliCommand,
     },
     messages::{self, Message},
-    state_machine::StateMachine,
+    transport::ProtocolAdapter,
 };
 use anyhow::Result;
 use clap::Args;
@@ -15,7 +15,7 @@ use clap::Args;
 #[derive(Debug, Clone, Args)]
 pub struct SignMessage {
     /// BIP-32 path to signing key
-    #[clap(value_parser = Bip32PathParser)]
+    #[clap(short = 'n', long, value_parser = Bip32PathParser, default_value = "m/44'/0'/0'/0/0")]
     address: Bip32Path,
     message: String,
     #[clap(short, long)]
@@ -25,10 +25,10 @@ pub struct SignMessage {
 }
 
 impl CliCommand for SignMessage {
-    fn handle(self, state_machine: &dyn StateMachine) -> Result<()> {
+    fn handle(self, protocol_adapter: &dyn ProtocolAdapter) -> Result<()> {
         let resp = expect_message!(
             Message::MessageSignature,
-            state_machine.send_and_handle(
+            protocol_adapter.send_and_handle(
                 messages::SignMessage {
                     address_n: self.address.into(),
                     message: self.message.into_bytes(),

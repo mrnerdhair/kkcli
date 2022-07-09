@@ -7,7 +7,7 @@ use crate::{
         CliCommand,
     },
     messages::{self, Message},
-    state_machine::StateMachine,
+    transport::ProtocolAdapter,
 };
 use anyhow::Result;
 use clap::{builder::ArgGroup, Args};
@@ -23,12 +23,12 @@ use primitive_types::U256;
 )]
 pub struct EthereumSignTx {
     /// BIP-32 path to signing key
-    #[clap(value_parser = Bip32PathParser)]
+    #[clap(short = 'n', long, value_parser = Bip32PathParser, default_value = "m/44'/60'/0'/0/0")]
     address: Bip32Path,
     /// EIP-155 chain id (specify 0 to disable replay protection)
     #[clap(short, long, default_value_t = 1)]
     chain_id: u32,
-    #[clap(short, long, value_parser = U256Parser)]
+    #[clap(long, value_parser = U256Parser)]
     nonce: U256,
     /// value to transfer, in wei
     #[clap(short, long, value_parser = U256Parser, group = "payload")]
@@ -62,13 +62,13 @@ pub struct EthereumSignTx {
 }
 
 impl CliCommand for EthereumSignTx {
-    fn handle(self, state_machine: &dyn StateMachine) -> Result<()> {
+    fn handle(self, protocol_adapter: &dyn ProtocolAdapter) -> Result<()> {
         let data_length = self.data.as_ref().map(|x| x.len().try_into().unwrap());
         let mut data = self.data.as_ref().map(|x| x.split_at(min(x.len(), 1024)));
 
         let resp = expect_message!(
             Message::EthereumTxRequest,
-            state_machine.send_and_handle_or(
+            protocol_adapter.send_and_handle_or(
                 messages::EthereumSignTx {
                     address_n: self.address.into(),
                     nonce: Some(self.nonce.into_big_endian()),

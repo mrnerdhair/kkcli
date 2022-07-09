@@ -1,15 +1,6 @@
-use core::{
-    cmp::min,
-    iter::repeat,
-    time::Duration,
-};
+use super::Transport;
+use core::{cmp::min, iter::repeat, time::Duration};
 use rusb::{Device, DeviceHandle, EndpointDescriptor, Interface, InterfaceDescriptor, UsbContext};
-
-pub trait Transport {
-    type Error: std::error::Error;
-    fn write(&self, msg: &[u8], timeout: Duration) -> Result<usize, Self::Error>;
-    fn read(&self, buf: &mut Vec<u8>, timeout: Duration) -> Result<(), Self::Error>;
-}
 
 pub struct UsbTransport<T: UsbContext> {
     handle: DeviceHandle<T>,
@@ -18,7 +9,7 @@ pub struct UsbTransport<T: UsbContext> {
 }
 
 impl<T: UsbContext> UsbTransport<T> {
-    pub fn new(device: Device<T>) -> Result<Self, rusb::Error> {
+    pub fn new(device: Device<T>, endpoint_index: u8) -> Result<Self, rusb::Error> {
         let config_descriptor = device.active_config_descriptor().unwrap();
         let mut handle = device.open()?;
 
@@ -41,15 +32,11 @@ impl<T: UsbContext> UsbTransport<T> {
 
         Ok(Self {
             handle,
-            endpoint_index: 1,
+            endpoint_index,
             packet_size: endpoint_descriptor.max_packet_size().into(),
         })
     }
-    fn read_packet(
-        &self,
-        buf: &mut Vec<u8>,
-        timeout: Duration,
-    ) -> Result<(), rusb::Error> {
+    fn read_packet(&self, buf: &mut Vec<u8>, timeout: Duration) -> Result<(), rusb::Error> {
         let mut packet = vec![0u8; self.packet_size];
         let len = self
             .handle
@@ -81,11 +68,7 @@ impl<T: UsbContext> Transport for UsbTransport<T> {
         }
         Ok(msg.len())
     }
-    fn read(
-        &self,
-        buf: &mut Vec<u8>,
-        timeout: Duration,
-    ) -> Result<(), Self::Error> {
+    fn read(&self, buf: &mut Vec<u8>, timeout: Duration) -> Result<(), Self::Error> {
         let mut packet = Vec::<u8>::with_capacity(self.packet_size);
         self.read_packet(&mut packet, timeout)?;
 
@@ -101,7 +84,9 @@ impl<T: UsbContext> Transport for UsbTransport<T> {
             buf.extend_from_slice(&packet[..min(len_remaining, packet.len())]);
             len_remaining = len_remaining.saturating_sub(packet.len());
 
-            if len_remaining == 0 { break }
+            if len_remaining == 0 {
+                break;
+            }
 
             packet.clear();
             self.read_packet(&mut packet, timeout)?;

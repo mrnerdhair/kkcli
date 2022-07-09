@@ -1,7 +1,7 @@
 use crate::{
     cli::{expect_success, parsers::TypedPossibleValuesParser, CliCommand},
     messages::{self, Message},
-    state_machine::StateMachine,
+    transport::ProtocolAdapter,
 };
 use anyhow::Result;
 use clap::{ArgAction::SetTrue, Args};
@@ -34,8 +34,8 @@ pub struct ResetDevice {
 }
 
 impl CliCommand for ResetDevice {
-    fn handle(self, state_machine: &dyn StateMachine) -> Result<()> {
-        expect_success!(state_machine.send_and_handle_or(
+    fn handle(self, protocol_adapter: &dyn ProtocolAdapter) -> Result<()> {
+        expect_success!(protocol_adapter.send_and_handle_or(
             messages::ResetDevice {
                 display_random: self.display_random,
                 strength: self.strength,

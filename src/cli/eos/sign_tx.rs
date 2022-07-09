@@ -7,7 +7,7 @@ use crate::{
         CliCommand,
     },
     messages::{self, Message},
-    state_machine::StateMachine,
+    transport::ProtocolAdapter,
 };
 use anyhow::{anyhow, Result};
 use clap::Args;
@@ -17,7 +17,7 @@ use schemars::schema_for;
 #[derive(Debug, Clone, Args)]
 pub struct EosSignTx {
     /// BIP-32 path to source address
-    #[clap(value_parser = Bip32PathParser, default_value = "m/44'/194'/0'/0/0")]
+    #[clap(short = 'n', long, value_parser = Bip32PathParser, default_value = "m/44'/194'/0'/0/0")]
     address: Bip32Path,
     #[clap(short, long, value_parser = HexParser32)]
     chain_id: [u8; 32],
@@ -27,15 +27,12 @@ pub struct EosSignTx {
 }
 
 impl CliCommand for EosSignTx {
-    fn handle(self, state_machine: &dyn StateMachine) -> Result<()> {
-        println!("{:#?}", self.tx);
-        println!("{}", serde_json::to_string_pretty(&self.tx)?);
-
+    fn handle(self, protocol_adapter: &dyn ProtocolAdapter) -> Result<()> {
         let mut actions = self.tx.actions;
         actions.reverse(); // reverse the list so pop() will happen in order
         let resp = expect_message!(
             Message::EosSignedTx,
-            state_machine.send_and_handle_or(
+            protocol_adapter.send_and_handle_or(
                 messages::EosSignTx {
                     address_n: self.address.into(),
                     chain_id: Some(self.chain_id.to_vec()),

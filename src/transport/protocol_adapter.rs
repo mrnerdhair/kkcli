@@ -1,54 +1,25 @@
-use std::{
-    io::{stdin, stdout, Write},
-    time::Duration,
-};
-
-use crate::{
-    messages::{self, Message},
-    transport::Transport,
-};
+use super::{MessageHandler, ProtocolAdapter, Transport};
+use crate::messages::{self, Message};
 use anyhow::{anyhow, bail, Result};
+use std::io::{stdin, stdout, Write};
 
-const TIMEOUT: Duration = Duration::from_millis(5000);
-const LONG_TIMEOUT: Duration = Duration::from_millis(5 * 60 * 1000);
-
-pub trait StateMachine {
-    fn send(&self, msg: Message) -> Result<Message>;
-    fn send_and_handle(&self, msg: Message) -> Result<Message>;
-    fn send_and_handle_or(
-        &self,
-        msg: Message,
-        handler: &mut dyn FnMut(&Message) -> Result<Option<Message>>,
-    ) -> Result<Message>;
-}
-
-pub struct TransportStateMachine<'a, T: Transport> {
-    transport: &'a T,
+pub struct DeviceProtocolAdapter<T: Transport> {
+    transport: T,
     pub verbose: bool,
 }
 
-impl<'a, T: Transport<Error = E>, E: std::error::Error + Send + Sync + 'static>
-    TransportStateMachine<'a, T>
+impl<T: Transport<Error = E>, E: std::error::Error + Send + Sync + 'static>
+    DeviceProtocolAdapter<T>
 {
-    pub const fn new(transport: &'a T) -> Self {
+    pub const fn new(transport: T) -> Self {
         Self {
             transport,
             verbose: false,
         }
     }
 
-    fn read_timeout_for_message(x: &Message) -> Duration {
-        match x {
-            Message::ButtonAck(_) => LONG_TIMEOUT,
-            _ => TIMEOUT,
-        }
-    }
-
-    fn write_timeout_for_message(x: &Message) -> Duration {
-        match x {
-            Message::FirmwareUpload(_) => LONG_TIMEOUT,
-            _ => TIMEOUT,
-        }
+    pub fn take(self) -> T {
+        self.transport
     }
 
     fn standard_handler(msg: &Message) -> Result<Option<Message>> {
@@ -96,27 +67,32 @@ impl<'a, T: Transport<Error = E>, E: std::error::Error + Send + Sync + 'static>
     }
 }
 
-impl<'a, T: Transport<Error = E>, E: std::error::Error + Send + Sync + 'static> StateMachine
-    for TransportStateMachine<'a, T>
+impl<T: Transport<Error = E>, E: std::error::Error + Send + Sync + 'static> ProtocolAdapter
+    for DeviceProtocolAdapter<T>
 {
     fn send(&self, msg: Message) -> Result<Message> {
-        if self.verbose {
-            println!("-> {:?}", msg);
-        }
-        let mut out_buf = Vec::<u8>::with_capacity(msg.encoded_len());
-        msg.encode(&mut out_buf)?;
-        self.transport
-            .write(&mut out_buf, Self::write_timeout_for_message(&msg))?;
+        let read_timeout = msg.read_timeout();
+        self.send_one_way(msg)?;
 
         let mut in_buf = Vec::<u8>::new();
-        self.transport
-            .read(&mut in_buf, Self::read_timeout_for_message(&msg))?;
+        self.transport.read(&mut in_buf, read_timeout)?;
 
         let out = Message::decode(&mut in_buf.as_slice()).map_err(|x| anyhow!(x))?;
         if self.verbose {
             println!("<- {:?}", out);
         }
         Ok(out)
+    }
+
+    fn send_one_way(&self, msg: Message) -> Result<()> {
+        if self.verbose {
+            println!("-> {:?}", msg);
+        }
+        let mut out_buf = Vec::<u8>::with_capacity(msg.encoded_len());
+        msg.encode(&mut out_buf)?;
+        self.transport.write(&mut out_buf, msg.write_timeout())?;
+
+        Ok(())
     }
 
     fn send_and_handle(&self, msg: Message) -> Result<Message> {
@@ -126,7 +102,7 @@ impl<'a, T: Transport<Error = E>, E: std::error::Error + Send + Sync + 'static> 
     fn send_and_handle_or(
         &self,
         mut msg: Message,
-        handler: &mut dyn FnMut(&Message) -> Result<Option<Message>>,
+        handler: &mut MessageHandler,
     ) -> Result<Message> {
         loop {
             let out = self.send(msg)?;

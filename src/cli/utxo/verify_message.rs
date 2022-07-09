@@ -1,7 +1,7 @@
 use crate::{
     cli::{parsers::Base64Parser, types::ByteVec, CliCommand},
     messages::{self, Message},
-    state_machine::StateMachine,
+    transport::ProtocolAdapter,
 };
 use anyhow::{bail, Result};
 use clap::Args;
@@ -21,8 +21,8 @@ pub struct VerifyMessage {
 }
 
 impl CliCommand for VerifyMessage {
-    fn handle(self, state_machine: &dyn StateMachine) -> Result<()> {
-        match state_machine.send_and_handle(
+    fn handle(self, protocol_adapter: &dyn ProtocolAdapter) -> Result<()> {
+        match protocol_adapter.send_and_handle(
             messages::VerifyMessage {
                 address: Some(self.address.into()),
                 signature: Some(self.signature),

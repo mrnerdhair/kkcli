@@ -56,3 +56,9 @@ serde_clap_parser! {
     [u8; 32],
     HexDef,
 }
+
+serde_clap_parser! {
+    pub HexParser65,
+    [u8; 65],
+    HexDef,
+}
