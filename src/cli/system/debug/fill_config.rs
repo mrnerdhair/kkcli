@@ -9,13 +9,13 @@ pub struct DebugLinkFillConfig;
 impl CliDebugCommand for DebugLinkFillConfig {
     fn handle_debug(
         self,
-        _: &dyn ProtocolAdapter,
-        debug_protocol_adapter: Option<&dyn ProtocolAdapter>,
+        _: &mut dyn ProtocolAdapter,
+        debug_protocol_adapter: Option<&mut dyn ProtocolAdapter>,
     ) -> Result<()> {
         let debug_protocol_adapter = debug_protocol_adapter
             .ok_or_else(|| anyhow!("this command requires a DEBUG_LINK connection"))?;
 
-        debug_protocol_adapter.send_one_way(messages::DebugLinkFillConfig {}.into())?;
+        debug_protocol_adapter.send(messages::DebugLinkFillConfig {}.into())?;
 
         Ok(())
     }

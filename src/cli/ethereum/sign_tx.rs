@@ -62,46 +62,16 @@ pub struct EthereumSignTx {
 }
 
 impl CliCommand for EthereumSignTx {
-    fn handle(self, protocol_adapter: &dyn ProtocolAdapter) -> Result<()> {
+    fn handle(self, protocol_adapter: &mut dyn ProtocolAdapter) -> Result<()> {
         let data_length = self.data.as_ref().map(|x| x.len().try_into().unwrap());
         let mut data = self.data.as_ref().map(|x| x.split_at(min(x.len(), 1024)));
+        let data_initial_chunk = data.map(|x| x.0.to_owned());
 
         let resp = expect_message!(
             Message::EthereumTxRequest,
-            protocol_adapter.send_and_handle_or(
-                messages::EthereumSignTx {
-                    address_n: self.address.into(),
-                    nonce: Some(self.nonce.into_big_endian()),
-                    gas_price: self.gas_price.map(|x| x.into_big_endian()),
-                    gas_limit: Some(self.gas_limit.into_big_endian()),
-                    to: self.to.map(|x| x.to_vec()),
-                    value: self.value.map(|x| x.into_big_endian()),
-                    max_fee_per_gas: self.max_fee_per_gas.map(|x| x.into_big_endian()),
-                    max_priority_fee_per_gas: self
-                        .max_priority_fee_per_gas
-                        .map(|x| x.into_big_endian()),
-                    chain_id: if self.chain_id == 0 {
-                        None
-                    } else {
-                        Some(self.chain_id)
-                    },
-                    address_type: self
-                        .to_path
-                        .as_ref()
-                        .map_or_else(|| None, |_| Some(OutputAddressType::Transfer as i32)),
-                    r#type: self
-                        .max_priority_fee_per_gas
-                        .map_or_else(|| Some(0), |_| Some(2)),
-                    data_length,
-                    data_initial_chunk: data.map(|x| x.0.to_owned()),
-                    to_address_n: self.to_path.unwrap_or_default().into(),
-                    token_value: None,
-                    token_to: None,
-                    token_shortcut: None,
-                    tx_type: None,
-                }
-                .into(),
-                &mut |msg| {
+            protocol_adapter
+                .with_standard_handler()
+                .with_mut_handler(&mut |msg| {
                     Ok(match msg {
                         Message::EthereumTxRequest(messages::EthereumTxRequest {
                             data_length: Some(data_length),
@@ -119,8 +89,41 @@ impl CliCommand for EthereumSignTx {
                         }
                         _ => None,
                     })
-                },
-            )
+                },)
+                .handle(
+                    messages::EthereumSignTx {
+                        address_n: self.address.into(),
+                        nonce: Some(self.nonce.into_big_endian()),
+                        gas_price: self.gas_price.map(|x| x.into_big_endian()),
+                        gas_limit: Some(self.gas_limit.into_big_endian()),
+                        to: self.to.map(|x| x.to_vec()),
+                        value: self.value.map(|x| x.into_big_endian()),
+                        max_fee_per_gas: self.max_fee_per_gas.map(|x| x.into_big_endian()),
+                        max_priority_fee_per_gas: self
+                            .max_priority_fee_per_gas
+                            .map(|x| x.into_big_endian()),
+                        chain_id: if self.chain_id == 0 {
+                            None
+                        } else {
+                            Some(self.chain_id)
+                        },
+                        address_type: self
+                            .to_path
+                            .as_ref()
+                            .map_or_else(|| None, |_| Some(OutputAddressType::Transfer as i32)),
+                        r#type: self
+                            .max_priority_fee_per_gas
+                            .map_or_else(|| Some(0), |_| Some(2)),
+                        data_length,
+                        data_initial_chunk,
+                        to_address_n: self.to_path.unwrap_or_default().into(),
+                        token_value: None,
+                        token_to: None,
+                        token_shortcut: None,
+                        tx_type: None,
+                    }
+                    .into(),
+                )
         )?;
 
         let v = *expect_field!(resp.signature_v)?;

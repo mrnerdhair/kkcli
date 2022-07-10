@@ -6,17 +6,17 @@ use crate::{
 use anyhow::Result;
 use clap::{ArgAction::SetTrue, Args};
 
-/// Set or remove PIN protection
+/// Set or remove wipe code protection
 #[derive(Debug, Clone, Args)]
-pub struct ChangePin {
+pub struct ChangeWipeCode {
     #[clap(short, long, action = SetTrue)]
     remove: Option<bool>,
 }
 
-impl CliCommand for ChangePin {
+impl CliCommand for ChangeWipeCode {
     fn handle(self, protocol_adapter: &mut dyn ProtocolAdapter) -> Result<()> {
         expect_success!(protocol_adapter.with_standard_handler().handle(
-            messages::ChangePin {
+            messages::ChangeWipeCode {
                 remove: self.remove
             }
             .into()

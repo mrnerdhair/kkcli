@@ -4,7 +4,7 @@ pub mod transport;
 
 use crate::{
     cli::{Cli, CliDebugCommand, Subcommand},
-    transport::{DeviceProtocolAdapter, ProtocolAdapter, UsbTransport},
+    transport::{ProtocolAdapter, UsbTransport},
 };
 use anyhow::{anyhow, Result};
 use clap::Parser;
@@ -63,24 +63,15 @@ fn main() -> Result<()> {
         return Ok(());
     }
 
-    let protocol_adapter = UsbTransport::new(get_device()?, 1).map(|x| {
-        let mut out = DeviceProtocolAdapter::new(x);
-        out.verbose = cli.verbose;
-        out
-    })?;
+    *transport::protocol_adapter::VERBOSE.write().unwrap() = cli.verbose;
 
-    let debug_protocol_adapter = UsbTransport::new(get_device()?, 2)
-        .map(|x| {
-            let mut out = DeviceProtocolAdapter::new(x);
-            out.verbose = cli.verbose;
-            out
-        })
-        .ok();
+    let mut transport = UsbTransport::new(get_device()?, 0)?;
+    let mut debug_transport = UsbTransport::new(get_device()?, 1).ok();
 
     cli.handle_debug(
-        &protocol_adapter,
-        debug_protocol_adapter
-            .as_ref()
-            .map(|x| -> &dyn ProtocolAdapter { x }),
+        &mut transport,
+        debug_transport
+            .as_mut()
+            .map(|x| -> &mut dyn ProtocolAdapter { x }),
     )
 }

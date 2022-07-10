@@ -16,8 +16,8 @@ pub struct ApplyPolicy {
 }
 
 impl CliCommand for ApplyPolicy {
-    fn handle(self, protocol_adapter: &dyn ProtocolAdapter) -> Result<()> {
-        expect_success!(protocol_adapter.send_and_handle(
+    fn handle(self, protocol_adapter: &mut dyn ProtocolAdapter) -> Result<()> {
+        expect_success!(protocol_adapter.with_standard_handler().handle(
             messages::ApplyPolicies {
                 policy: vec![messages::PolicyType {
                     policy_name: Some(self.policy_name),

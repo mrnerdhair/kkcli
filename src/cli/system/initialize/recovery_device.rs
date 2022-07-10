@@ -4,7 +4,10 @@ use crate::{
     transport::ProtocolAdapter,
 };
 use anyhow::Result;
-use clap::{ArgAction::{SetTrue, SetFalse}, Args};
+use clap::{
+    ArgAction::{SetFalse, SetTrue},
+    Args,
+};
 use crossterm::event::{Event, KeyCode, KeyEvent};
 use std::io::{stdout, Write};
 
@@ -35,23 +38,11 @@ pub struct RecoveryDevice {
 }
 
 impl CliCommand for RecoveryDevice {
-    fn handle(self, protocol_adapter: &dyn ProtocolAdapter) -> Result<()> {
+    fn handle(self, protocol_adapter: &mut dyn ProtocolAdapter) -> Result<()> {
         let mut printed_char_req_msg = false;
-        expect_success!(protocol_adapter.send_and_handle_or(
-            messages::RecoveryDevice {
-                word_count: Some(self.word_count),
-                passphrase_protection: self.passphrase_protection,
-                pin_protection: self.pin_protection,
-                language: self.language,
-                label: self.label,
-                enforce_wordlist: self.no_enforce_wordlist.map(|x| !x),
-                use_character_cipher: None,
-                auto_lock_delay_ms: self.auto_lock_delay_ms,
-                u2f_counter: self.u2f_counter,
-                dry_run: self.dry_run,
-            }
-            .into(),
-            &mut |msg| match msg {
+        expect_success!(protocol_adapter
+            .with_standard_handler()
+            .with_mut_handler(&mut |msg| match msg {
                 Message::CharacterRequest(messages::CharacterRequest { character_pos, .. }) => {
                     if !printed_char_req_msg {
                         print!(
@@ -109,8 +100,22 @@ impl CliCommand for RecoveryDevice {
                     }
                     Ok(None)
                 }
-            },
-        ))?;
+            },)
+            .handle(
+                messages::RecoveryDevice {
+                    word_count: Some(self.word_count),
+                    passphrase_protection: self.passphrase_protection,
+                    pin_protection: self.pin_protection,
+                    language: self.language,
+                    label: self.label,
+                    enforce_wordlist: self.no_enforce_wordlist.map(|x| !x),
+                    use_character_cipher: None,
+                    auto_lock_delay_ms: self.auto_lock_delay_ms,
+                    u2f_counter: self.u2f_counter,
+                    dry_run: self.dry_run,
+                }
+                .into(),
+            ))?;
 
         Ok(())
     }

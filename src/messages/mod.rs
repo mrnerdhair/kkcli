@@ -22,7 +22,7 @@ kk_message!(
     PublicKey,
     LoadDevice,
     ResetDevice,
-        SignTx,
+    SignTx,
     Features,
     PinMatrixRequest,
     PinMatrixAck,

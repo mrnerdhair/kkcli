@@ -29,22 +29,22 @@ pub struct SignIdentity {
 }
 
 impl CliCommand for SignIdentity {
-    fn handle(self, protocol_adapter: &dyn ProtocolAdapter) -> Result<()> {
+    fn handle(self, protocol_adapter: &mut dyn ProtocolAdapter) -> Result<()> {
         let url = Some(self.url)
-            .and_then(|x| if x == "" { None } else { Some(x) })
+            .filter(|x| *x != "")
             .map(|x| Url::parse(&x))
             .transpose()?;
 
         let resp = expect_message!(
             Message::SignedIdentity,
-            protocol_adapter.send_and_handle(
+            protocol_adapter.with_standard_handler().handle(
                 messages::SignIdentity {
                     identity: Some(messages::IdentityType {
                         proto: url.as_ref().map(|x| x.scheme().to_string()),
                         user: url
                             .as_ref()
                             .map(|x| x.username())
-                            .and_then(|x| if x == "" { None } else { Some(x) })
+                            .filter(|x| *x != "")
                             .map(|x| x.to_string()),
                         host: url
                             .as_ref()
@@ -54,7 +54,7 @@ impl CliCommand for SignIdentity {
                         path: url
                             .as_ref()
                             .map(|x| x.path())
-                            .and_then(|x| if x == "" { None } else { Some(x) })
+                            .filter(|x| *x != "")
                             .map(|x| x.to_string()),
                         index: self.index,
                     }),

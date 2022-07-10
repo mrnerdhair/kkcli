@@ -11,9 +11,9 @@ use clap::Args;
 pub struct WipeDevice;
 
 impl CliCommand for WipeDevice {
-    fn handle(self, protocol_adapter: &dyn ProtocolAdapter) -> Result<()> {
+    fn handle(self, protocol_adapter: &mut dyn ProtocolAdapter) -> Result<()> {
         expect_success!(
-            protocol_adapter.send_and_handle(messages::WipeDevice::default().into())
+            protocol_adapter.with_standard_handler().handle(messages::WipeDevice::default().into())
         )?;
 
         Ok(())

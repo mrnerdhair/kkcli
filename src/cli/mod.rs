@@ -31,15 +31,15 @@ use anyhow::Result;
 use clap::{ArgAction::SetTrue, Parser};
 
 pub trait CliCommand {
-    fn handle(self, protocol_adapter: &dyn ProtocolAdapter) -> Result<()>;
+    fn handle(self, protocol_adapter: &mut dyn ProtocolAdapter) -> Result<()>;
 }
 
 pub trait CliDebugCommand {
-    fn handle_debug(self, protocol_adapter: &dyn ProtocolAdapter, debug_protocol_adapter: Option<&dyn ProtocolAdapter>) -> Result<()>;
+    fn handle_debug(self, protocol_adapter: &mut dyn ProtocolAdapter, debug_protocol_adapter: Option<&mut dyn ProtocolAdapter>) -> Result<()>;
 }
 
 impl<T: CliCommand> CliDebugCommand for T {
-    fn handle_debug(self, protocol_adapter: &dyn ProtocolAdapter, _: Option<&dyn ProtocolAdapter>) -> Result<()> {
+    fn handle_debug(self, protocol_adapter: &mut dyn ProtocolAdapter, _: Option<&mut dyn ProtocolAdapter>) -> Result<()> {
         self.handle(protocol_adapter)
     }
 }
@@ -117,4 +117,9 @@ use_cli_subcommands! {
     SignIdentity,
     RippleGetAddress,
     RippleSignTx,
+    // SignTx,
+    ChangeWipeCode,
+    FlashHash,
+    FlashWrite,
+    SoftReset,
 }

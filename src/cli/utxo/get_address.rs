@@ -27,10 +27,10 @@ pub struct GetAddress {
 }
 
 impl CliCommand for GetAddress {
-    fn handle(self, protocol_adapter: &dyn ProtocolAdapter) -> Result<()> {
+    fn handle(self, protocol_adapter: &mut dyn ProtocolAdapter) -> Result<()> {
         let resp = expect_message!(
             Message::Address,
-            protocol_adapter.send_and_handle(
+            protocol_adapter.with_standard_handler().handle(
                 messages::GetAddress {
                     coin_name: self.coin_name,
                     address_n: self.address.into(),

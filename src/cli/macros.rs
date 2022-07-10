@@ -59,8 +59,9 @@ macro_rules! use_cli_subcommands {
         }
 
         impl crate::cli::CliDebugCommand for Cli {
-            fn handle_debug(self, protocol_adapter: &dyn crate::transport::ProtocolAdapter, debug_protocol_adapter: Option<&dyn crate::transport::ProtocolAdapter>) -> ::anyhow::Result<()> {
-                protocol_adapter.send(crate::messages::Initialize::default().into())?;
+            fn handle_debug(self, protocol_adapter: &mut dyn crate::transport::ProtocolAdapter, debug_protocol_adapter: Option<&mut dyn crate::transport::ProtocolAdapter>) -> ::anyhow::Result<()> {
+                protocol_adapter.reset()?;
+                crate::cli::expect_message!(crate::messages::Message::Features, protocol_adapter.handle(crate::messages::Initialize::default().into()))?;
 
                 match self.command {
                     $(Subcommand::$x(cmd) => crate::cli::CliDebugCommand::handle_debug(cmd, protocol_adapter, debug_protocol_adapter)),*

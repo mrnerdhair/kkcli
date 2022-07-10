@@ -27,27 +27,15 @@ pub struct EosSignTx {
 }
 
 impl CliCommand for EosSignTx {
-    fn handle(self, protocol_adapter: &dyn ProtocolAdapter) -> Result<()> {
+    fn handle(self, protocol_adapter: &mut dyn ProtocolAdapter) -> Result<()> {
         let mut actions = self.tx.actions;
+        let num_actions = actions.len();
         actions.reverse(); // reverse the list so pop() will happen in order
         let resp = expect_message!(
             Message::EosSignedTx,
-            protocol_adapter.send_and_handle_or(
-                messages::EosSignTx {
-                    address_n: self.address.into(),
-                    chain_id: Some(self.chain_id.to_vec()),
-                    header: Some(messages::EosTxHeader {
-                        expiration: self.tx.header.expiration.timestamp().try_into()?,
-                        ref_block_num: self.tx.header.ref_block_num.into(),
-                        ref_block_prefix: self.tx.header.ref_block_prefix,
-                        max_net_usage_words: self.tx.header.max_net_usage_words,
-                        max_cpu_usage_ms: self.tx.header.max_cpu_usage_ms.into(),
-                        delay_sec: self.tx.header.delay_sec,
-                    }),
-                    num_actions: Some(actions.len().try_into()?),
-                }
-                .into(),
-                &mut |msg| {
+            protocol_adapter
+                .with_standard_handler()
+                .with_mut_handler(&mut |msg| {
                     Ok(match msg {
                         Message::EosTxActionRequest(_) => Some(
                             actions
@@ -58,8 +46,23 @@ impl CliCommand for EosSignTx {
                         ),
                         _ => None,
                     })
-                },
-            )
+                },)
+                .handle(
+                    messages::EosSignTx {
+                        address_n: self.address.into(),
+                        chain_id: Some(self.chain_id.to_vec()),
+                        header: Some(messages::EosTxHeader {
+                            expiration: self.tx.header.expiration.timestamp().try_into()?,
+                            ref_block_num: self.tx.header.ref_block_num.into(),
+                            ref_block_prefix: self.tx.header.ref_block_prefix,
+                            max_net_usage_words: self.tx.header.max_net_usage_words,
+                            max_cpu_usage_ms: self.tx.header.max_cpu_usage_ms.into(),
+                            delay_sec: self.tx.header.delay_sec,
+                        }),
+                        num_actions: Some(num_actions.try_into()?),
+                    }
+                    .into(),
+                )
         )?;
 
         let v = *expect_field!(resp.signature_v)?;

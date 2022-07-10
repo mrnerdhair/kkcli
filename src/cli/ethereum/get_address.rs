@@ -18,10 +18,10 @@ pub struct EthereumGetAddress {
 }
 
 impl CliCommand for EthereumGetAddress {
-    fn handle(self, protocol_adapter: &dyn ProtocolAdapter) -> Result<()> {
+    fn handle(self, protocol_adapter: &mut dyn ProtocolAdapter) -> Result<()> {
         let resp = expect_message!(
             Message::EthereumAddress,
-            protocol_adapter.send_and_handle(
+            protocol_adapter.with_standard_handler().handle(
                 messages::EthereumGetAddress {
                     address_n: self.address.into(),
                     show_display: self.show_display,

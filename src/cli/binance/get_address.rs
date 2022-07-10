@@ -18,10 +18,10 @@ pub struct BinanceGetAddress {
 }
 
 impl CliCommand for BinanceGetAddress {
-    fn handle(self, protocol_adapter: &dyn ProtocolAdapter) -> Result<()> {
+    fn handle(self, protocol_adapter: &mut dyn ProtocolAdapter) -> Result<()> {
         let resp = expect_message!(
             Message::BinanceAddress,
-            protocol_adapter.send_and_handle(
+            protocol_adapter.with_standard_handler().handle(
                 messages::BinanceGetAddress {
                     address_n: self.address.into(),
                     show_display: self.show_display,

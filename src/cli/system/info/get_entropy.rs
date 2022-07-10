@@ -13,10 +13,10 @@ pub struct GetEntropy {
 }
 
 impl CliCommand for GetEntropy {
-    fn handle(self, protocol_adapter: &dyn ProtocolAdapter) -> Result<()> {
+    fn handle(self, protocol_adapter: &mut dyn ProtocolAdapter) -> Result<()> {
         let resp = expect_message!(
             Message::Entropy,
-            protocol_adapter.send_and_handle(messages::GetEntropy { size: self.size }.into())
+            protocol_adapter.with_standard_handler().handle(messages::GetEntropy { size: self.size }.into())
         )?;
         println!("{}", hex::encode(resp.entropy));
 

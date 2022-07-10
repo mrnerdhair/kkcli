@@ -40,8 +40,8 @@ pub struct LoadDevice {
 }
 
 impl CliCommand for LoadDevice {
-    fn handle(self, protocol_adapter: &dyn ProtocolAdapter) -> Result<()> {
-        expect_success!(protocol_adapter.send_and_handle(
+    fn handle(self, protocol_adapter: &mut dyn ProtocolAdapter) -> Result<()> {
+        expect_success!(protocol_adapter.with_standard_handler().handle(
             messages::LoadDevice {
                 mnemonic: self.mnemonic,
                 node: self.xprv.map(|x| messages::HdNodeType {

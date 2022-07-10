@@ -11,9 +11,9 @@ use clap::Args;
 pub struct ClearSession;
 
 impl CliCommand for ClearSession {
-    fn handle(self, protocol_adapter: &dyn ProtocolAdapter) -> Result<()> {
+    fn handle(self, protocol_adapter: &mut dyn ProtocolAdapter) -> Result<()> {
         expect_success!(
-            protocol_adapter.send_and_handle(messages::ClearSession::default().into())
+            protocol_adapter.handle(messages::ClearSession::default().into())
         )?;
 
         Ok(())

@@ -12,10 +12,10 @@ use core::time::Duration;
 pub struct GetFeatures;
 
 impl CliCommand for GetFeatures {
-    fn handle(self, protocol_adapter: &dyn ProtocolAdapter) -> Result<()> {
+    fn handle(self, protocol_adapter: &mut dyn ProtocolAdapter) -> Result<()> {
         let features = expect_message!(
             Message::Features,
-            protocol_adapter.send_and_handle(messages::GetFeatures::default().into())
+            protocol_adapter.handle(messages::GetFeatures::default().into())
         )?;
 
         if let Some(label) = features.label {

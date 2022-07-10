@@ -45,10 +45,10 @@ pub struct NanoSignTx {
 }
 
 impl CliCommand for NanoSignTx {
-    fn handle(self, protocol_adapter: &dyn ProtocolAdapter) -> Result<()> {
+    fn handle(self, protocol_adapter: &mut dyn ProtocolAdapter) -> Result<()> {
         let resp = expect_message!(
             Message::NanoSignedTx,
-            protocol_adapter.send_and_handle(
+            protocol_adapter.with_standard_handler().handle(
                 messages::NanoSignTx {
                     address_n: self.address.into(),
                     coin_name: self.coin_name,

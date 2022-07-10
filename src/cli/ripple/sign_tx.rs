@@ -6,7 +6,7 @@ use crate::{
 use anyhow::Result;
 use clap::Args;
 
-/// Sign Cosmos transactions
+/// Sign Ripple transaction
 #[derive(Debug, Clone, Args)]
 pub struct RippleSignTx {
     /// BIP-32 path to source address (for compatibility with other wallets, must be m/44'/144'/index')
@@ -36,10 +36,10 @@ pub struct RippleSignTx {
 }
 
 impl CliCommand for RippleSignTx {
-    fn handle(self, protocol_adapter: &dyn ProtocolAdapter) -> Result<()> {
+    fn handle(self, protocol_adapter: &mut dyn ProtocolAdapter) -> Result<()> {
         let resp = expect_message!(
             Message::RippleSignedTx,
-            protocol_adapter.send_and_handle(
+            protocol_adapter.with_standard_handler().handle(
                 messages::RippleSignTx {
                     address_n: self.address.into(),
                     fee: Some(self.fee),

@@ -22,8 +22,8 @@ pub struct Ping {
 }
 
 impl CliCommand for Ping {
-    fn handle(self, protocol_adapter: &dyn ProtocolAdapter) -> Result<()> {
-        let resp = expect_success!(protocol_adapter.send_and_handle(
+    fn handle(self, protocol_adapter: &mut dyn ProtocolAdapter) -> Result<()> {
+        let resp = expect_success!(protocol_adapter.with_standard_handler().handle(
             messages::Ping {
                 message: self.message.clone(),
                 button_protection: self.button_protection,

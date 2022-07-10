@@ -21,8 +21,8 @@ pub struct VerifyMessage {
 }
 
 impl CliCommand for VerifyMessage {
-    fn handle(self, protocol_adapter: &dyn ProtocolAdapter) -> Result<()> {
-        match protocol_adapter.send_and_handle(
+    fn handle(self, protocol_adapter: &mut dyn ProtocolAdapter) -> Result<()> {
+        match protocol_adapter.with_standard_handler().handle(
             messages::VerifyMessage {
                 address: Some(self.address.into()),
                 signature: Some(self.signature),

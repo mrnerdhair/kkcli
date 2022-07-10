@@ -29,10 +29,10 @@ pub struct GetPublicKey {
 }
 
 impl CliCommand for GetPublicKey {
-    fn handle(self, protocol_adapter: &dyn ProtocolAdapter) -> Result<()> {
+    fn handle(self, protocol_adapter: &mut dyn ProtocolAdapter) -> Result<()> {
         let resp = expect_message!(
             Message::PublicKey,
-            protocol_adapter.send_and_handle(
+            protocol_adapter.with_standard_handler().handle(
                 messages::GetPublicKey {
                     address_n: self.address.into(),
                     ecdsa_curve_name: self.ecdsa_curve_name,

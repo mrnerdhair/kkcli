@@ -22,10 +22,10 @@ pub struct EthereumSignMessage {
 }
 
 impl CliCommand for EthereumSignMessage {
-    fn handle(self, protocol_adapter: &dyn ProtocolAdapter) -> Result<()> {
+    fn handle(self, protocol_adapter: &mut dyn ProtocolAdapter) -> Result<()> {
         let resp = expect_message!(
             Message::EthereumMessageSignature,
-            protocol_adapter.send_and_handle(
+            protocol_adapter.with_standard_handler().handle(
                 messages::EthereumSignMessage {
                     address_n: self.address.into(),
                     message: self.message.into_bytes(),

@@ -16,15 +16,15 @@ pub struct DebugLinkFlashDump {
 impl CliDebugCommand for DebugLinkFlashDump {
     fn handle_debug(
         self,
-        _: &dyn ProtocolAdapter,
-        debug_protocol_adapter: Option<&dyn ProtocolAdapter>,
+        _: &mut dyn ProtocolAdapter,
+        debug_protocol_adapter: Option<&mut dyn ProtocolAdapter>,
     ) -> Result<()> {
         let debug_protocol_adapter = debug_protocol_adapter
             .ok_or_else(|| anyhow!("this command requires a DEBUG_LINK connection"))?;
 
         let resp = expect_message!(
             Message::DebugLinkFlashDumpResponse,
-            debug_protocol_adapter.send_and_handle(
+            debug_protocol_adapter.handle(
                 messages::DebugLinkFlashDump {
                     address: Some(self.address),
                     length: Some(self.length),

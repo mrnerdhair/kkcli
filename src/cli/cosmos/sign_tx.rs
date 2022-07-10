@@ -13,7 +13,7 @@ use anyhow::{anyhow, Result};
 use clap::Args;
 use schemars::schema_for;
 
-/// Sign Cosmos transactions
+/// Sign Cosmos transaction
 #[derive(Debug, Clone, Args)]
 pub struct CosmosSignTx {
     /// BIP-32 path to source address
@@ -25,24 +25,14 @@ pub struct CosmosSignTx {
 }
 
 impl CliCommand for CosmosSignTx {
-    fn handle(self, protocol_adapter: &dyn ProtocolAdapter) -> Result<()> {
+    fn handle(self, protocol_adapter: &mut dyn ProtocolAdapter) -> Result<()> {
         let mut msgs = self.tx.msg.to_vec();
+        let msg_count = msgs.len();
         msgs.reverse();
         let resp = expect_message!(
             Message::CosmosSignedTx,
-            protocol_adapter.send_and_handle_or(
-                messages::CosmosSignTx {
-                    address_n: self.address.into(),
-                    chain_id: Some(self.tx.chain_id),
-                    account_number: Some(self.tx.account_number),
-                    fee_amount: Some(self.tx.fee.amount[0].amount.try_into()?),
-                    gas: Some(self.tx.fee.gas.try_into()?),
-                    memo: Some(self.tx.memo),
-                    sequence: Some(self.tx.sequence),
-                    msg_count: Some(msgs.len().try_into()?),
-                }
-                .into(),
-                &mut |msg| {
+            protocol_adapter.with_standard_handler()
+                .with_mut_handler(&mut |msg| {
                     Ok(match msg {
                         Message::CosmosMsgRequest(_) => Some(
                             msgs.pop()
@@ -52,12 +42,30 @@ impl CliCommand for CosmosSignTx {
                         ),
                         _ => None,
                     })
-                },
-            )
+                },)
+                .handle(
+                    messages::CosmosSignTx {
+                        address_n: self.address.into(),
+                        chain_id: Some(self.tx.chain_id),
+                        account_number: Some(self.tx.account_number),
+                        fee_amount: Some(self.tx.fee.amount[0].amount.try_into()?),
+                        gas: Some(self.tx.fee.gas.try_into()?),
+                        memo: Some(self.tx.memo),
+                        sequence: Some(self.tx.sequence),
+                        msg_count: Some(msg_count.try_into()?),
+                    }
+                    .into()
+                )
         )?;
 
-        println!("Public Key:\t{}", hex::encode(expect_field!(resp.public_key)?));
-        println!("Signature:\t{}", hex::encode(expect_field!(resp.signature)?));
+        println!(
+            "Public Key:\t{}",
+            hex::encode(expect_field!(resp.public_key)?)
+        );
+        println!(
+            "Signature:\t{}",
+            hex::encode(expect_field!(resp.signature)?)
+        );
 
         Ok(())
     }

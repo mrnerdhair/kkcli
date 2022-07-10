@@ -12,10 +12,10 @@ use core::cmp::min;
 pub struct ListCoins;
 
 impl CliCommand for ListCoins {
-    fn handle(self, protocol_adapter: &dyn ProtocolAdapter) -> Result<()> {
+    fn handle(self, protocol_adapter: &mut dyn ProtocolAdapter) -> Result<()> {
         let resp = expect_message!(
             Message::CoinTable,
-            protocol_adapter.send(
+            protocol_adapter.handle(
                 messages::GetCoinTable {
                     start: None,
                     end: None,
@@ -32,7 +32,7 @@ impl CliCommand for ListCoins {
             .flat_map(|start| {
                 let resp = expect_message!(
                     Message::CoinTable,
-                    protocol_adapter.send(
+                    protocol_adapter.handle(
                         messages::GetCoinTable {
                             start: Some(start),
                             end: Some(min(num_coins, start + chunk_size)),

@@ -25,10 +25,10 @@ pub struct EosGetPublicKey {
 }
 
 impl CliCommand for EosGetPublicKey {
-    fn handle(self, protocol_adapter: &dyn ProtocolAdapter) -> Result<()> {
+    fn handle(self, protocol_adapter: &mut dyn ProtocolAdapter) -> Result<()> {
         let resp = expect_message!(
             Message::EosPublicKey,
-            protocol_adapter.send_and_handle(
+            protocol_adapter.with_standard_handler().handle(
                 messages::EosGetPublicKey {
                     address_n: self.address.into(),
                     show_display: self.show_display,

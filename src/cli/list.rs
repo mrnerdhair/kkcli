@@ -7,7 +7,7 @@ use clap::Args;
 pub struct List;
 
 impl CliCommand for List {
-    fn handle(self, _state_machine: &dyn ProtocolAdapter) -> Result<()> {
+    fn handle(self, _: &mut dyn ProtocolAdapter) -> Result<()> {
         unreachable!();
     }
 }

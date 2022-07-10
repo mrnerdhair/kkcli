@@ -34,21 +34,10 @@ pub struct ResetDevice {
 }
 
 impl CliCommand for ResetDevice {
-    fn handle(self, protocol_adapter: &dyn ProtocolAdapter) -> Result<()> {
-        expect_success!(protocol_adapter.send_and_handle_or(
-            messages::ResetDevice {
-                display_random: self.display_random,
-                strength: self.strength,
-                passphrase_protection: self.passphrase_protection,
-                pin_protection: self.pin_protection,
-                language: self.language,
-                label: self.label,
-                no_backup: self.no_backup,
-                auto_lock_delay_ms: self.auto_lock_delay_ms,
-                u2f_counter: self.u2f_counter,
-            }
-            .into(),
-            &mut |msg| match msg {
+    fn handle(self, protocol_adapter: &mut dyn ProtocolAdapter) -> Result<()> {
+        expect_success!(protocol_adapter
+            .with_standard_handler()
+            .with_handler(&mut |msg| match msg {
                 Message::EntropyRequest(_) => {
                     let mut out = [0; 32];
                     rand::thread_rng().fill(&mut out);
@@ -60,8 +49,21 @@ impl CliCommand for ResetDevice {
                     ))
                 }
                 _ => Ok(None),
-            },
-        ))?;
+            })
+            .handle(
+                messages::ResetDevice {
+                    display_random: self.display_random,
+                    strength: self.strength,
+                    passphrase_protection: self.passphrase_protection,
+                    pin_protection: self.pin_protection,
+                    language: self.language,
+                    label: self.label,
+                    no_backup: self.no_backup,
+                    auto_lock_delay_ms: self.auto_lock_delay_ms,
+                    u2f_counter: self.u2f_counter,
+                }
+                .into(),
+            ))?;
 
         Ok(())
     }

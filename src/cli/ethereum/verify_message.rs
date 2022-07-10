@@ -23,8 +23,8 @@ pub struct EthereumVerifyMessage {
 }
 
 impl CliCommand for EthereumVerifyMessage {
-    fn handle(self, protocol_adapter: &dyn ProtocolAdapter) -> Result<()> {
-        match protocol_adapter.send_and_handle(
+    fn handle(self, protocol_adapter: &mut dyn ProtocolAdapter) -> Result<()> {
+        match protocol_adapter.with_standard_handler().handle(
             messages::EthereumVerifyMessage {
                 address: Some(self.address.to_vec()),
                 message: Some(self.message.into_bytes()),

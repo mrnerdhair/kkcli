@@ -1,23 +1,27 @@
 mod apply_policy;
 mod change_pin;
+mod change_wipe_code;
 mod cipher_key_value;
 mod clear_session;
 pub mod debug;
 mod firmware_update;
 pub mod info;
 pub mod initialize;
+mod manufacturing;
 mod set_label;
 mod sign_identity;
 mod wipe_device;
 
 pub use apply_policy::*;
 pub use change_pin::*;
+pub use change_wipe_code::*;
 pub use cipher_key_value::*;
 pub use clear_session::*;
 pub use debug::*;
 pub use firmware_update::*;
 pub use info::*;
 pub use initialize::*;
+pub use manufacturing::*;
 pub use set_label::*;
 pub use sign_identity::*;
 pub use wipe_device::*;

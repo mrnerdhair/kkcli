@@ -18,10 +18,10 @@ pub struct RippleGetAddress {
 }
 
 impl CliCommand for RippleGetAddress {
-    fn handle(self, protocol_adapter: &dyn ProtocolAdapter) -> Result<()> {
+    fn handle(self, protocol_adapter: &mut dyn ProtocolAdapter) -> Result<()> {
         let resp = expect_message!(
             Message::RippleAddress,
-            protocol_adapter.send_and_handle(
+            protocol_adapter.with_standard_handler().handle(
                 messages::RippleGetAddress {
                     address_n: self.address.into(),
                     show_display: self.show_display,

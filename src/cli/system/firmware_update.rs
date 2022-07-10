@@ -17,18 +17,18 @@ pub struct FirmwareUpdate {
 }
 
 impl CliCommand for FirmwareUpdate {
-    fn handle(self, protocol_adapter: &dyn ProtocolAdapter) -> Result<()> {
+    fn handle(self, protocol_adapter: &mut dyn ProtocolAdapter) -> Result<()> {
         let payload = std::fs::read(self.file_path)?;
 
         if !self.skip_erase {
             println!("Erasing firmware...");
             expect_success!(
-                protocol_adapter.send_and_handle(messages::FirmwareErase::default().into()),
+                protocol_adapter.with_standard_handler().handle(messages::FirmwareErase::default().into()),
             )?;
         }
 
         println!("Uploading firmware...");
-        expect_success!(protocol_adapter.send_and_handle(
+        expect_success!(protocol_adapter.with_standard_handler().handle(
             messages::FirmwareUpload {
                 payload_hash: Sha256::digest(&payload).to_vec(),
                 payload,
