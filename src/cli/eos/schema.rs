@@ -127,6 +127,7 @@ pub mod alternate {
 
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct Key {
+    //TODO: maybe move to KeyData::raw and flatten struct?
     pub r#type: u32,
     #[serde(flatten)]
     pub data: KeyData,
@@ -258,7 +259,7 @@ pub struct TransactionHeader {
     #[schemars(
         with = "String",
         regex(
-            pattern = r"^([1-9]\d{3})-(0[1-9]|1[012])-(0[1-9]|[12]\d|3[01])\s([01]\d|2[0-3]):([0-5]\d):([0-5]\d|60)(\.\d{0,8}[1-9])?$"
+            pattern = r"^([1-9]\d{3})-(0[1-9]|1[012])-(0[1-9]|[12]\d|3[01])[Tt]([01]\d|2[0-3]):([0-5]\d):([0-5]\d|60)(\.\d{0,8}[1-9])?$"
         )
     )]
     pub expiration: chrono::NaiveDateTime,
@@ -277,7 +278,7 @@ pub struct Action {
     #[serde(
         with = "serde_with::As::<Vec::<PickFirst::<(DisplayFromStr, FromInto::<alternate::PermissionLevel>)>>>"
     )]
-    #[schemars(with = "PermissionLevelDef")]
+    #[schemars(with = "Vec<PermissionLevelDef>")]
     pub authorization: Vec<PermissionLevel>,
     #[serde(flatten)]
     pub outer: ActionInnerOuter,
@@ -333,9 +334,11 @@ pub enum ActionInner {
         receiver: Name,
         #[serde(with = "serde_with::As::<DisplayFromStr>")]
         #[schemars(with = "AssetDef")]
+        //TODO: check if name should be suffixed in _quantity
         stake_net_quantity: Asset,
         #[serde(with = "serde_with::As::<DisplayFromStr>")]
         #[schemars(with = "AssetDef")]
+        //TODO: check if name should be suffixed in _quantity
         stake_cpu_quantity: Asset,
         transfer: bool,
     },
@@ -348,9 +351,11 @@ pub enum ActionInner {
         receiver: Name,
         #[serde(with = "serde_with::As::<DisplayFromStr>")]
         #[schemars(with = "AssetDef")]
+        //TODO: check if name should be suffixed in _quantity
         unstake_net_quantity: Asset,
         #[serde(with = "serde_with::As::<DisplayFromStr>")]
         #[schemars(with = "AssetDef")]
+        //TODO: check if name should be suffixed in _quantity
         unstake_cpu_quantity: Asset,
     },
     Refund {

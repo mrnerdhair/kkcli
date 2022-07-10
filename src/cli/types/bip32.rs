@@ -7,8 +7,9 @@ use regex::Regex;
 use serde_with::{SerializeDisplay, DeserializeFromStr};
 
 #[derive(Debug, Clone, Default, SerializeDisplay, DeserializeFromStr, SerdeAsSelf, JsonSchema)]
-#[schemars(with = "String", regex(pattern = r"^m(/[0-9]+'?)*$"))]
+#[schemars(transparent)]
 pub struct Bip32Path(
+    #[schemars(with = "String", regex(pattern = r"^m(/[0-9]+'?)*$"))]
     Vec<u32>
 );
 
