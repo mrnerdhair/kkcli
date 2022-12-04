@@ -106,9 +106,7 @@ pub fn derive_serde_as_remote(input: TokenStream) -> TokenStream {
 #[proc_macro_derive(SerdeAsSelf)]
 pub fn derive_serde_as_self(input: TokenStream) -> TokenStream {
     let DeriveInput {
-        ident,
-        generics,
-        ..
+        ident, generics, ..
     } = parse_macro_input!(input);
     let (impl_generics, ty_generics, where_clause) = generics.split_for_impl();
 

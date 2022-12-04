@@ -1,5 +1,10 @@
 use crate::{
-    cli::{expect_message, expect_field, parsers::{Bip32PathParser, HexParser32}, types::Bip32Path, CliCommand},
+    cli::{
+        expect_field, expect_message,
+        parsers::{Bip32PathParser, HexParser32},
+        types::Bip32Path,
+        CliCommand,
+    },
     messages::{self, Message},
     transport::ProtocolAdapter,
 };
@@ -70,9 +75,14 @@ impl CliCommand for NanoSignTx {
             )
         )?;
 
-        
-        println!("Signature:\t{}", hex::encode(expect_field!(resp.signature)?));
-        println!("Block Hash:\t{}", hex::encode(expect_field!(resp.block_hash)?));
+        println!(
+            "Signature:\t{}",
+            hex::encode(expect_field!(resp.signature)?)
+        );
+        println!(
+            "Block Hash:\t{}",
+            hex::encode(expect_field!(resp.block_hash)?)
+        );
 
         Ok(())
     }

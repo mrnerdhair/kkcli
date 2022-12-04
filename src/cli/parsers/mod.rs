@@ -11,9 +11,13 @@ use clap::{Arg, Command, PossibleValue};
 use std::ffi::{OsStr, OsString};
 
 pub use self::{
-    base64::Base64Parser, bip32::Bip32PathParser, hex::{HexParser, HexParser16, HexParser20, HexParser32, HexParser65},
-    serde::SerdeJsonFileOrLiteralParser, typed_possible_values::TypedPossibleValuesParser,
-    u256::U256Parser, xprv::XprvParser,
+    base64::Base64Parser,
+    bip32::Bip32PathParser,
+    hex::{HexParser, HexParser16, HexParser20, HexParser32, HexParser65},
+    serde::SerdeJsonFileOrLiteralParser,
+    typed_possible_values::TypedPossibleValuesParser,
+    u256::U256Parser,
+    xprv::XprvParser,
 };
 
 pub trait FromStringParser: Clone + Send + Sync {

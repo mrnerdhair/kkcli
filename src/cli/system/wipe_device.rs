@@ -12,9 +12,9 @@ pub struct WipeDevice;
 
 impl CliCommand for WipeDevice {
     fn handle(self, protocol_adapter: &mut dyn ProtocolAdapter) -> Result<()> {
-        expect_success!(
-            protocol_adapter.with_standard_handler().handle(messages::WipeDevice::default().into())
-        )?;
+        expect_success!(protocol_adapter
+            .with_standard_handler()
+            .handle(messages::WipeDevice::default().into()))?;
 
         Ok(())
     }

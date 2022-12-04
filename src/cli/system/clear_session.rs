@@ -12,9 +12,7 @@ pub struct ClearSession;
 
 impl CliCommand for ClearSession {
     fn handle(self, protocol_adapter: &mut dyn ProtocolAdapter) -> Result<()> {
-        expect_success!(
-            protocol_adapter.handle(messages::ClearSession::default().into())
-        )?;
+        expect_success!(protocol_adapter.handle(messages::ClearSession::default().into()))?;
 
         Ok(())
     }

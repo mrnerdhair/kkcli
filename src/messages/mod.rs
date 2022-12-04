@@ -69,7 +69,7 @@ kk_message!(
     DebugLinkFlashDump,
     DebugLinkFlashDumpResponse,
     SoftReset,
-        DebugLinkDecision,
+    DebugLinkDecision,
     DebugLinkGetState,
     DebugLinkState,
     DebugLinkStop,

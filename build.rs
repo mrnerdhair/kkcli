@@ -25,20 +25,26 @@
 
 fn main() -> std::io::Result<()> {
     std::env::set_var("PROTOC", protoc_bin_vendored::protoc_bin_path().unwrap());
-    std::env::set_var("PROTOC_INCLUDE", protoc_bin_vendored::include_path().unwrap());
+    std::env::set_var(
+        "PROTOC_INCLUDE",
+        protoc_bin_vendored::include_path().unwrap(),
+    );
     // config.
     let mut config = prost_build::Config::new();
     config.btree_map(&["."]);
-    config.compile_protos(&[
-        "deps/device-protocol/messages-binance.proto",
-        "deps/device-protocol/messages-cosmos.proto",
-        "deps/device-protocol/messages-eos.proto",
-        "deps/device-protocol/messages-nano.proto",
-        "deps/device-protocol/messages-osmosis.proto",
-        "deps/device-protocol/messages-ripple.proto",
-        "deps/device-protocol/messages-tendermint.proto",
-        "deps/device-protocol/messages-thorchain.proto",
-        "deps/device-protocol/messages.proto",
-    ], &["deps/device-protocol/"])?;
+    config.compile_protos(
+        &[
+            "deps/device-protocol/messages-binance.proto",
+            "deps/device-protocol/messages-cosmos.proto",
+            "deps/device-protocol/messages-eos.proto",
+            "deps/device-protocol/messages-nano.proto",
+            "deps/device-protocol/messages-osmosis.proto",
+            "deps/device-protocol/messages-ripple.proto",
+            "deps/device-protocol/messages-tendermint.proto",
+            "deps/device-protocol/messages-thorchain.proto",
+            "deps/device-protocol/messages.proto",
+        ],
+        &["deps/device-protocol/"],
+    )?;
     Ok(())
 }

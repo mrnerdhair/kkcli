@@ -1,5 +1,5 @@
-use core::time::Duration;
 use super::Message;
+use core::time::Duration;
 
 const TIMEOUT: Duration = Duration::from_millis(5000);
 const LONG_TIMEOUT: Duration = Duration::from_millis(5 * 60 * 1000);

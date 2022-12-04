@@ -31,7 +31,8 @@ impl CliCommand for BinanceSignTx {
         msgs.reverse();
         let resp = expect_message!(
             Message::BinanceSignedTx,
-            protocol_adapter.with_standard_handler()
+            protocol_adapter
+                .with_standard_handler()
                 .with_mut_handler(&mut |msg| {
                     Ok(match msg {
                         Message::BinanceTxRequest(_) => Some(

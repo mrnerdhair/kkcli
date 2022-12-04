@@ -9,14 +9,14 @@ use clap::{ArgAction::SetTrue, Args};
 /// Get Thorchain address
 #[derive(Debug, Clone, Args)]
 pub struct ThorchainGetAddress {
-        /// BIP-32 path to key
-        #[clap(short = 'n', long, value_parser = Bip32PathParser, default_value = "m/44'/931'/0'/0/0")]
-        address: Bip32Path,
-        /// Confirm address on device screen
-        #[clap(short = 'd', long, action = SetTrue)]
-        show_display: Option<bool>,
-        #[clap(short, long, action = SetTrue)]
-        testnet: Option<bool>,
+    /// BIP-32 path to key
+    #[clap(short = 'n', long, value_parser = Bip32PathParser, default_value = "m/44'/931'/0'/0/0")]
+    address: Bip32Path,
+    /// Confirm address on device screen
+    #[clap(short = 'd', long, action = SetTrue)]
+    show_display: Option<bool>,
+    #[clap(short, long, action = SetTrue)]
+    testnet: Option<bool>,
 }
 
 impl CliCommand for ThorchainGetAddress {

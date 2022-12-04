@@ -4,7 +4,7 @@ use crate::{
     transport::ProtocolAdapter,
 };
 use anyhow::Result;
-use clap::{Args, ArgAction::SetTrue};
+use clap::{ArgAction::SetTrue, Args};
 
 /// Send ping message
 #[derive(Debug, Clone, Args)]

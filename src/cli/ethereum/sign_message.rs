@@ -1,10 +1,5 @@
 use crate::{
-    cli::{
-        expect_field, expect_message,
-        parsers::Bip32PathParser,
-        types::Bip32Path,
-        CliCommand,
-    },
+    cli::{expect_field, expect_message, parsers::Bip32PathParser, types::Bip32Path, CliCommand},
     messages::{self, Message},
     transport::ProtocolAdapter,
 };

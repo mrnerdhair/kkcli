@@ -50,7 +50,7 @@ macro_rules! kk_message {
                     $(Message::$x(_) => protos::MessageType::$x),*
                 }
             }
-            
+
             fn decode_as_type<B: bytes::Buf>(buf: &mut B, message_type: protos::MessageType) -> Result<Self, ::prost::DecodeError> {
                 Ok(match message_type {
                     $(protos::MessageType::$x => Message::$x(<protos::$x as ::prost::Message>::decode(buf)?)),*

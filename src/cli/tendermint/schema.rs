@@ -1,5 +1,5 @@
+use crate::{cli::types::OutputAddressType, messages};
 use anyhow::Result;
-use crate::{messages, cli::types::OutputAddressType};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use serde_with::DisplayFromStr;
@@ -64,16 +64,24 @@ impl Msg {
     }
     pub fn bech32_hrp(&self) -> Option<String> {
         match self {
-            &Self::CosmosSdkMsgSend { ref to_address, ref from_address, .. } => {
+            &Self::CosmosSdkMsgSend {
+                ref to_address,
+                ref from_address,
+                ..
+            } => {
                 let out = bech32_hrp(from_address)?;
                 assert_eq!(out, bech32_hrp(to_address)?);
                 Some(out.to_string())
-            },
-            &Self::ThorchainMsgSend { ref to_address, ref from_address, .. } => {
+            }
+            &Self::ThorchainMsgSend {
+                ref to_address,
+                ref from_address,
+                ..
+            } => {
                 let out = bech32_hrp(from_address)?;
                 assert_eq!(out, bech32_hrp(to_address)?);
                 Some(out.to_string())
-            },
+            }
         }
     }
     pub fn as_message(&self) -> Result<messages::TendermintMsgAck> {

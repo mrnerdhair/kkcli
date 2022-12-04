@@ -9,18 +9,18 @@ use clap::{ArgAction::SetTrue, Args};
 /// Get Tendermint address
 #[derive(Debug, Clone, Args)]
 pub struct TendermintGetAddress {
-        /// BIP-32 path to key
-        #[clap(short = 'n', long, value_parser = Bip32PathParser, default_value = "m/44'/118'/0'/0/0")]
-        address: Bip32Path,
-        /// Confirm address on device screen
-        #[clap(short = 'd', long, action = SetTrue)]
-        show_display: Option<bool>,
-        /// Bech32 prefix for generated address
-        #[clap(short = 'p', long)]
-        address_prefix: String,
-        /// Name of chain (i.e. "cosmos")
-        #[clap(short, long)]
-        chain_name: String,
+    /// BIP-32 path to key
+    #[clap(short = 'n', long, value_parser = Bip32PathParser, default_value = "m/44'/118'/0'/0/0")]
+    address: Bip32Path,
+    /// Confirm address on device screen
+    #[clap(short = 'd', long, action = SetTrue)]
+    show_display: Option<bool>,
+    /// Bech32 prefix for generated address
+    #[clap(short = 'p', long)]
+    address_prefix: String,
+    /// Name of chain (i.e. "cosmos")
+    #[clap(short, long)]
+    chain_name: String,
 }
 
 impl CliCommand for TendermintGetAddress {

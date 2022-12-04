@@ -35,11 +35,19 @@ pub trait CliCommand {
 }
 
 pub trait CliDebugCommand {
-    fn handle_debug(self, protocol_adapter: &mut dyn ProtocolAdapter, debug_protocol_adapter: Option<&mut dyn ProtocolAdapter>) -> Result<()>;
+    fn handle_debug(
+        self,
+        protocol_adapter: &mut dyn ProtocolAdapter,
+        debug_protocol_adapter: Option<&mut dyn ProtocolAdapter>,
+    ) -> Result<()>;
 }
 
 impl<T: CliCommand> CliDebugCommand for T {
-    fn handle_debug(self, protocol_adapter: &mut dyn ProtocolAdapter, _: Option<&mut dyn ProtocolAdapter>) -> Result<()> {
+    fn handle_debug(
+        self,
+        protocol_adapter: &mut dyn ProtocolAdapter,
+        _: Option<&mut dyn ProtocolAdapter>,
+    ) -> Result<()> {
         self.handle(protocol_adapter)
     }
 }

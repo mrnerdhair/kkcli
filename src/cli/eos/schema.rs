@@ -139,9 +139,11 @@ pub enum KeyData {
     Raw {
         #[serde(with = "serde_with::As::<serde_with::hex::Hex>")]
         #[schemars(with = "String", regex(pattern = r"^(0x)?([0-9a-fA-F]{2})*$"))]
-        key: Vec<u8>
+        key: Vec<u8>,
     },
-    AddressN { address_n: Bip32Path },
+    AddressN {
+        address_n: Bip32Path,
+    },
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]

@@ -34,7 +34,10 @@ macro_rules! expect_field {
             }
             fn type_ident(&self) -> &'static str {
                 let type_name = self.type_name();
-                type_name.rfind("::").map(|x| &type_name[(x + "::".len())..]).unwrap_or(type_name)
+                type_name
+                    .rfind("::")
+                    .map(|x| &type_name[(x + "::".len())..])
+                    .unwrap_or(type_name)
             }
         }
 

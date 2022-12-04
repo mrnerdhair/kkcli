@@ -22,9 +22,9 @@ impl CliCommand for FirmwareUpdate {
 
         if !self.skip_erase {
             println!("Erasing firmware...");
-            expect_success!(
-                protocol_adapter.with_standard_handler().handle(messages::FirmwareErase::default().into()),
-            )?;
+            expect_success!(protocol_adapter
+                .with_standard_handler()
+                .handle(messages::FirmwareErase::default().into()),)?;
         }
 
         println!("Uploading firmware...");

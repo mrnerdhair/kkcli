@@ -1,17 +1,14 @@
 use anyhow::{bail, Error};
 use kkcli_derive::SerdeAsSelf;
 use lazy_static::lazy_static;
-use schemars::JsonSchema;
-use std::{str::FromStr, fmt::Display};
 use regex::Regex;
-use serde_with::{SerializeDisplay, DeserializeFromStr};
+use schemars::JsonSchema;
+use serde_with::{DeserializeFromStr, SerializeDisplay};
+use std::{fmt::Display, str::FromStr};
 
 #[derive(Debug, Clone, Default, SerializeDisplay, DeserializeFromStr, SerdeAsSelf, JsonSchema)]
 #[schemars(transparent)]
-pub struct Bip32Path(
-    #[schemars(with = "String", regex(pattern = r"^m(/[0-9]+'?)*$"))]
-    Vec<u32>
-);
+pub struct Bip32Path(#[schemars(with = "String", regex(pattern = r"^m(/[0-9]+'?)*$"))] Vec<u32>);
 
 impl AsRef<[u32]> for Bip32Path {
     fn as_ref(&self) -> &[u32] {
