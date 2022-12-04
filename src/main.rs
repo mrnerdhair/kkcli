@@ -26,8 +26,8 @@ fn list_devices() -> Box<[Device<GlobalContext>]> {
 
 fn get_device() -> Result<Device<GlobalContext>> {
     Ok(list_devices()
-        .into_iter()
-        .nth(0)
+        .iter()
+        .next()
         .ok_or_else(|| anyhow!("no device found"))?
         .to_owned())
 }
@@ -38,7 +38,7 @@ fn main() -> Result<()> {
     // easier to just give it an extra couple of megs than to fix the problem.
     let cli = std::thread::Builder::new()
         .stack_size(4 * 1024 * 1024)
-        .spawn(|| Cli::parse())
+        .spawn(Cli::parse)
         .unwrap()
         .join();
     let cli = match cli {

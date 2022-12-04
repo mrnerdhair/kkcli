@@ -37,7 +37,7 @@ impl CliCommand for ResetDevice {
     fn handle(self, protocol_adapter: &mut dyn ProtocolAdapter) -> Result<()> {
         expect_success!(protocol_adapter
             .with_standard_handler()
-            .with_handler(&mut |msg| match msg {
+            .with_handler(&|msg| match msg {
                 Message::EntropyRequest(_) => {
                     let mut out = [0; 32];
                     rand::thread_rng().fill(&mut out);

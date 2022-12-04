@@ -24,7 +24,7 @@ impl CliCommand for VerifyMessage {
     fn handle(self, protocol_adapter: &mut dyn ProtocolAdapter) -> Result<()> {
         match protocol_adapter.with_standard_handler().handle(
             messages::VerifyMessage {
-                address: Some(self.address.into()),
+                address: Some(self.address),
                 signature: Some(self.signature),
                 message: Some(self.message.into_bytes()),
                 coin_name: self.coin_name,

@@ -85,9 +85,8 @@ impl CliCommand for GetFeatures {
             Some(true) => println!("\t\t\t(keys were imported from a computer)"),
             _ => (),
         }
-        match features.no_backup {
-            Some(true) => println!("\t\t\t(keys were not backed up during setup)"),
-            _ => (),
+        if let Some(true) = features.no_backup {
+            println!("\t\t\t(keys were not backed up during setup)")
         }
         if let Some(pin_protection) = features.pin_protection {
             println!("PIN protection:\t\t{}", pin_protection);
@@ -113,7 +112,7 @@ impl CliCommand for GetFeatures {
 
         println!();
         println!("policies:");
-        if features.policies.len() == 0 {
+        if features.policies.is_empty() {
             println!("\t(none)");
         }
         for policy in features.policies {

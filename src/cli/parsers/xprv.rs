@@ -7,7 +7,7 @@ serde_conv! {
     bip32::ExtendedPrivKey,
     |x: &bip32::ExtendedPrivKey| base58::check_encode_slice(&x.encode()),
     |x: &str| -> Result<bip32::ExtendedPrivKey, bip32::Error> {
-        Ok(bip32::ExtendedPrivKey::decode(&base58::from_check(x)?)?)
+        bip32::ExtendedPrivKey::decode(&base58::from_check(x)?)
     }
 }
 

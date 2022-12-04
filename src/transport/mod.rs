@@ -52,12 +52,7 @@ pub fn standard_message_handler(msg: &Message) -> Result<Option<Message>> {
             eprint!("Enter BIP-39 passphrase: ");
             stdout().flush().unwrap();
             let passphrase = passterm::read_password()?;
-            Some(
-                messages::PassphraseAck {
-                    passphrase: passphrase,
-                }
-                .into(),
-            )
+            Some(messages::PassphraseAck { passphrase }.into())
         }
         Message::Failure(x) => bail!("Failure: {}", x.message()),
         _ => None,
@@ -75,7 +70,7 @@ pub trait ProtocolAdapter {
     ) -> Box<dyn ProtocolAdapter + 'b> {
         Box::from(MessageHandlerStack {
             parent_adapter: self.as_mut_dyn(),
-            handler: handler.into(),
+            handler,
         })
     }
     fn with_mut_handler<'a: 'b, 'b>(
@@ -84,7 +79,7 @@ pub trait ProtocolAdapter {
     ) -> Box<dyn ProtocolAdapter + 'b> {
         Box::from(MessageHandlerMutStack {
             parent_adapter: self.as_mut_dyn(),
-            handler: handler.into(),
+            handler,
         })
     }
     fn with_standard_handler<'a>(&'a mut self) -> Box<dyn ProtocolAdapter + 'a> {

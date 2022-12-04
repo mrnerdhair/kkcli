@@ -18,15 +18,15 @@ impl JsonSchema for EmptyArrayDef {
         "EmptyArray".to_string()
     }
     fn json_schema(gen: &mut schemars::gen::SchemaGenerator) -> Schema {
-        let mut foo3 = ArrayValidation::default();
-        foo3.items = Some(SingleOrVec::Single(Box::from(gen.subschema_for::<()>())));
-        foo3.max_items = Some(0);
-
-        let mut foo2 = SchemaObject::default();
-        foo2.instance_type = Some(SingleOrVec::Single(Box::from(InstanceType::Array)));
-        foo2.array = Some(Box::from(foo3));
-
-        Schema::Object(foo2)
+        Schema::Object(SchemaObject {
+            instance_type: Some(SingleOrVec::Single(Box::from(InstanceType::Array))),
+            array: Some(Box::from(ArrayValidation {
+                items: Some(SingleOrVec::Single(Box::from(gen.subschema_for::<()>()))),
+                max_items: Some(0),
+                ..Default::default()
+            })),
+            ..Default::default()
+        })
     }
 }
 
@@ -36,14 +36,14 @@ impl JsonSchema for NameDef {
         "Name".to_string()
     }
     fn json_schema(_gen: &mut schemars::gen::SchemaGenerator) -> Schema {
-        let mut foo3 = StringValidation::default();
-        foo3.pattern = Some(r"^([a-z1-5.]{1,11}[a-z1-5])|([a-z1-5.]{12}[a-j1-5])$".to_string());
-
-        let mut foo2 = SchemaObject::default();
-        foo2.instance_type = Some(SingleOrVec::Single(Box::from(InstanceType::String)));
-        foo2.string = Some(Box::from(foo3));
-
-        Schema::Object(foo2)
+        Schema::Object(SchemaObject {
+            instance_type: Some(SingleOrVec::Single(Box::from(InstanceType::String))),
+            string: Some(Box::from(StringValidation {
+                pattern: Some(r"^([a-z1-5.]{1,11}[a-z1-5])|([a-z1-5.]{12}[a-j1-5])$".to_string()),
+                ..Default::default()
+            })),
+            ..Default::default()
+        })
     }
 }
 
@@ -53,14 +53,14 @@ impl JsonSchema for AssetDef {
         "Asset".to_string()
     }
     fn json_schema(_gen: &mut schemars::gen::SchemaGenerator) -> Schema {
-        let mut foo3 = StringValidation::default();
-        foo3.pattern = Some(r"^((\d+\.\d+)|(\d+)) +[A-Z]{1,7}$".to_string());
-
-        let mut foo2 = SchemaObject::default();
-        foo2.instance_type = Some(SingleOrVec::Single(Box::from(InstanceType::String)));
-        foo2.string = Some(Box::from(foo3));
-
-        Schema::Object(foo2)
+        Schema::Object(SchemaObject {
+            instance_type: Some(SingleOrVec::Single(Box::from(InstanceType::String))),
+            string: Some(Box::from(StringValidation {
+                pattern: Some(r"^((\d+\.\d+)|(\d+)) +[A-Z]{1,7}$".to_string()),
+                ..Default::default()
+            })),
+            ..Default::default()
+        })
     }
 }
 
@@ -70,23 +70,23 @@ impl JsonSchema for PermissionLevelDef {
         "EitherPermissionLevel".to_string()
     }
     fn json_schema(gen: &mut schemars::gen::SchemaGenerator) -> Schema {
-        let mut foo3 = StringValidation::default();
-        foo3.pattern = Some(
-            r"^([a-z1-5.]{1,11}[a-z1-5]$)|(^[a-z1-5.]{12}[a-j1-5])@([a-z1-5.]{1,11}[a-z1-5]$)|(^[a-z1-5.]{12}[a-j1-5])$".to_string(),
-        );
-
-        let mut foo2 = SchemaObject::default();
-        foo2.instance_type = Some(SingleOrVec::Single(Box::from(InstanceType::String)));
-        foo2.string = Some(Box::from(foo3));
-
-        let mut bar = SubschemaValidation::default();
-        bar.one_of = Some(vec![
-            Schema::Object(foo2),
-            gen.subschema_for::<alternate::PermissionLevel>(),
-        ]);
-        let mut x = SchemaObject::default();
-        x.subschemas = Some(Box::from(bar));
-        Schema::Object(x)
+        Schema::Object(SchemaObject {
+            subschemas: Some(Box::from(SubschemaValidation {
+                one_of: Some(vec![
+                    Schema::Object(SchemaObject {
+                        instance_type: Some(SingleOrVec::Single(Box::from(InstanceType::String))),
+                        string: Some(Box::from(StringValidation {
+                            pattern: Some(r"^([a-z1-5.]{1,11}[a-z1-5]$)|(^[a-z1-5.]{12}[a-j1-5])@([a-z1-5.]{1,11}[a-z1-5]$)|(^[a-z1-5.]{12}[a-j1-5])$".to_string()),
+                            ..Default::default()
+                        })),
+                        ..Default::default()
+                    }),
+                    gen.subschema_for::<alternate::PermissionLevel>(),
+                ]),
+                ..Default::default()
+            })),
+            ..Default::default()
+        })
     }
 }
 
@@ -225,19 +225,19 @@ impl From<&Authority> for messages::EosAuthorization {
                 .keys
                 .clone()
                 .iter()
-                .map(|x| Into::<messages::EosAuthorizationKey>::into(x))
+                .map(Into::<messages::EosAuthorizationKey>::into)
                 .collect(),
             accounts: x
                 .accounts
                 .clone()
                 .iter()
-                .map(|x| Into::<messages::EosAuthorizationAccount>::into(x))
+                .map(Into::<messages::EosAuthorizationAccount>::into)
                 .collect(),
             waits: x
                 .waits
                 .clone()
                 .iter()
-                .map(|x| Into::<messages::EosAuthorizationWait>::into(x))
+                .map(Into::<messages::EosAuthorizationWait>::into)
                 .collect(),
         }
     }
@@ -307,7 +307,7 @@ impl ActionInnerOuter {
     pub fn name(&self) -> Name {
         match self {
             Self::Known { inner } => Name::from_str(inner.name()).unwrap(),
-            Self::Unknown { name, .. } => name.clone(),
+            Self::Unknown { name, .. } => *name,
         }
     }
 }
@@ -481,22 +481,24 @@ impl ActionInner {
 
 impl Action {
     pub fn as_tx_action_ack(&self) -> Result<messages::EosTxActionAck> {
-        let mut out = messages::EosTxActionAck::default();
-        out.common = Some(messages::EosActionCommon {
-            account: Some(self.account.as_u64()),
-            name: Some(self.outer.name().as_u64()),
-            authorization: self
-                .authorization
-                .iter()
-                .map(|x| messages::EosPermissionLevel {
-                    actor: Some(x.actor.as_u64()),
-                    permission: Some(x.permission.as_u64()),
-                })
-                .collect(),
-        });
+        let mut out = messages::EosTxActionAck {
+            common: Some(messages::EosActionCommon {
+                account: Some(self.account.as_u64()),
+                name: Some(self.outer.name().as_u64()),
+                authorization: self
+                    .authorization
+                    .iter()
+                    .map(|x| messages::EosPermissionLevel {
+                        actor: Some(x.actor.as_u64()),
+                        permission: Some(x.permission.as_u64()),
+                    })
+                    .collect(),
+            }),
+            ..Default::default()
+        };
         match &self.outer {
-            &ActionInnerOuter::Known { ref inner } => match inner {
-                &ActionInner::BuyRam {
+            ActionInnerOuter::Known { ref inner } => match inner {
+                ActionInner::BuyRam {
                     ref payer,
                     ref receiver,
                     ref quant,
@@ -510,7 +512,7 @@ impl Action {
                         }),
                     })
                 }
-                &ActionInner::BuyRamBytes {
+                ActionInner::BuyRamBytes {
                     ref payer,
                     ref receiver,
                     bytes,
@@ -518,10 +520,10 @@ impl Action {
                     out.buy_ram_bytes = Some(messages::EosActionBuyRamBytes {
                         payer: Some(payer.as_u64()),
                         receiver: Some(receiver.as_u64()),
-                        bytes: Some(bytes),
+                        bytes: Some(*bytes),
                     })
                 }
-                &ActionInner::DelegateBw {
+                ActionInner::DelegateBw {
                     ref from,
                     ref receiver,
                     ref stake_net_quantity,
@@ -539,10 +541,10 @@ impl Action {
                             amount: Some(stake_cpu_quantity.amount),
                             symbol: Some(stake_cpu_quantity.symbol.as_u64()),
                         }),
-                        transfer: Some(transfer),
+                        transfer: Some(*transfer),
                     })
                 }
-                &ActionInner::DeleteAuth {
+                ActionInner::DeleteAuth {
                     ref account,
                     ref permission,
                 } => {
@@ -551,7 +553,7 @@ impl Action {
                         permission: Some(permission.as_u64()),
                     })
                 }
-                &ActionInner::LinkAuth {
+                ActionInner::LinkAuth {
                     ref account,
                     ref code,
                     ref r#type,
@@ -564,7 +566,7 @@ impl Action {
                         requirement: Some(requirement.as_u64()),
                     })
                 }
-                &ActionInner::NewAccount {
+                ActionInner::NewAccount {
                     ref creator,
                     ref name,
                     ref owner,
@@ -577,18 +579,18 @@ impl Action {
                         active: Some(active.into()),
                     })
                 }
-                &ActionInner::Refund { ref owner } => {
+                ActionInner::Refund { ref owner } => {
                     out.refund = Some(messages::EosActionRefund {
                         owner: Some(owner.as_u64()),
                     })
                 }
-                &ActionInner::SellRam { ref account, bytes } => {
+                ActionInner::SellRam { ref account, bytes } => {
                     out.sell_ram = Some(messages::EosActionSellRam {
                         account: Some(account.as_u64()),
-                        bytes: Some(bytes),
+                        bytes: Some(*bytes),
                     })
                 }
-                &ActionInner::Transfer {
+                ActionInner::Transfer {
                     ref from,
                     ref to,
                     ref quantity,
@@ -601,14 +603,14 @@ impl Action {
                             amount: Some(quantity.amount),
                             symbol: Some(quantity.symbol.as_u64()),
                         }),
-                        memo: if memo == "" {
+                        memo: if memo.is_empty() {
                             None
                         } else {
                             Some(memo.to_owned())
                         },
                     });
                 }
-                &ActionInner::UndelegateBw {
+                ActionInner::UndelegateBw {
                     ref from,
                     ref receiver,
                     ref unstake_net_quantity,
@@ -627,7 +629,7 @@ impl Action {
                         }),
                     })
                 }
-                &ActionInner::UnlinkAuth {
+                ActionInner::UnlinkAuth {
                     ref account,
                     ref code,
                     ref r#type,
@@ -638,7 +640,7 @@ impl Action {
                         r#type: Some(r#type.as_u64()),
                     })
                 }
-                &ActionInner::VoteProducer {
+                ActionInner::VoteProducer {
                     ref voter,
                     ref proxy,
                     ref producers,
@@ -649,7 +651,7 @@ impl Action {
                         producers: producers.iter().map(|x| x.as_u64()).collect(),
                     })
                 }
-                &ActionInner::UpdateAuth {
+                ActionInner::UpdateAuth {
                     ref account,
                     ref permission,
                     ref parent,
@@ -663,7 +665,7 @@ impl Action {
                     })
                 }
             },
-            &ActionInnerOuter::Unknown { ref data, .. } => {
+            ActionInnerOuter::Unknown { ref data, .. } => {
                 out.unknown = Some(messages::EosActionUnknown {
                     data_size: Some(data.len().try_into()?),
                     data_chunk: Some(data.clone()),

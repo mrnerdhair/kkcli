@@ -65,8 +65,8 @@ macro_rules! serde_clap_parser {
             type Value = $t;
             type Error = ::serde::de::value::Error;
             fn parse_str(&self, value: &str) -> Result<Self::Value, Self::Error> {
-                let foo = ::serde::de::IntoDeserializer::into_deserializer(value);
-                <$d as ::serde_with::DeserializeAs<'_, $t>>::deserialize_as(foo)
+                let deserializer = ::serde::de::IntoDeserializer::into_deserializer(value);
+                <$d as ::serde_with::DeserializeAs<'_, $t>>::deserialize_as(deserializer)
             }
         }
     };

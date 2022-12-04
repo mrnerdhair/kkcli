@@ -68,7 +68,7 @@ impl<T: UsbContext> UsbTransport<T> {
             "packet: {:?}",
             hex::encode(packet)
         );
-        if !(len >= 1 && packet[0] == '?' as u8) {
+        if !(len >= 1 && packet[0] == b'?') {
             return Err(rusb::Error::Other);
         }
         buf.extend_from_slice(&packet[1..]);
@@ -92,7 +92,7 @@ impl<T: UsbContext> Transport for UsbTransport<T> {
         let mut packet = Vec::<u8>::with_capacity(self.out_packet_size);
         for chunk in msg.chunks(self.out_packet_size - 1) {
             packet.clear();
-            packet.push('?' as u8);
+            packet.push(b'?');
             packet.extend_from_slice(chunk);
             packet.extend(repeat(0).take(self.out_packet_size - packet.len()));
             debug_assert_eq!(packet.len(), self.out_packet_size);
@@ -111,7 +111,7 @@ impl<T: UsbContext> Transport for UsbTransport<T> {
         let started = Instant::now();
         self.read_packet(&mut packet, timeout)?;
 
-        if !(packet.len() >= 8 && packet[0] == '#' as u8 && packet[1] == '#' as u8) {
+        if !(packet.len() >= 8 && packet[0] == b'#' && packet[1] == b'#') {
             return Err(rusb::Error::Other);
         }
         let msg_len: usize = u32::from_be_bytes(packet[4..8].try_into().unwrap())

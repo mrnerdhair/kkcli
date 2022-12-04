@@ -15,8 +15,10 @@ pub struct SetLabel {
 
 impl CliCommand for SetLabel {
     fn handle(self, protocol_adapter: &mut dyn ProtocolAdapter) -> Result<()> {
-        let mut req = messages::ApplySettings::default();
-        req.label = Some(self.label);
+        let req = messages::ApplySettings {
+            label: Some(self.label),
+            ..Default::default()
+        };
 
         expect_success!(protocol_adapter.with_standard_handler().handle(req.into()))?;
 

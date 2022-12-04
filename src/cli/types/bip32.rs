@@ -63,7 +63,7 @@ impl FromStr for Bip32Path {
 
 impl Display for Bip32Path {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        for i in self.0.iter().map(|x| *x) {
+        for i in self.0.iter().copied() {
             if i >= 0x80000000 {
                 write!(f, "/{}'", i - 0x80000000)?;
             } else {

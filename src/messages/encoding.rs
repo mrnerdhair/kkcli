@@ -40,8 +40,8 @@ impl Message {
         if remaining < required {
             return Err(EncodeError::new(required, remaining));
         }
-        buf.put_u8('#' as u8);
-        buf.put_u8('#' as u8);
+        buf.put_u8(b'#');
+        buf.put_u8(b'#');
         buf.put_u16(Into::<i32>::into(self.message_type()).try_into().unwrap());
         buf.put_u32(encoded_len.try_into().unwrap());
         prost::Message::encode(self, buf)
@@ -53,7 +53,7 @@ impl Message {
         if buf.remaining() < 8 {
             return Err(DecodeError::new("buffer too short"));
         }
-        if !(buf.get_u8() == '#' as u8 && buf.get_u8() == '#' as u8) {
+        if !(buf.get_u8() == b'#' && buf.get_u8() == b'#') {
             return Err(DecodeError::new("bad magic bytes"));
         }
         let msg_type: i32 = buf.get_u16().into();
@@ -62,9 +62,9 @@ impl Message {
             return Err(DecodeError::new("buffer too short"));
         }
 
-        Ok(Self::decode_as_type(
+        Self::decode_as_type(
             buf,
             MessageType::from_i32(msg_type).ok_or_else(|| DecodeError::new("bad message type"))?,
-        )?)
+        )
     }
 }

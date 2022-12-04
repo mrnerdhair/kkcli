@@ -31,7 +31,7 @@ pub struct SignIdentity {
 impl CliCommand for SignIdentity {
     fn handle(self, protocol_adapter: &mut dyn ProtocolAdapter) -> Result<()> {
         let url = Some(self.url)
-            .filter(|x| *x != "")
+            .filter(|x| !(*x).is_empty())
             .map(|x| Url::parse(&x))
             .transpose()?;
 
@@ -44,7 +44,7 @@ impl CliCommand for SignIdentity {
                         user: url
                             .as_ref()
                             .map(|x| x.username())
-                            .filter(|x| *x != "")
+                            .filter(|x| !(*x).is_empty())
                             .map(|x| x.to_string()),
                         host: url
                             .as_ref()
@@ -54,7 +54,7 @@ impl CliCommand for SignIdentity {
                         path: url
                             .as_ref()
                             .map(|x| x.path())
-                            .filter(|x| *x != "")
+                            .filter(|x| !(*x).is_empty())
                             .map(|x| x.to_string()),
                         index: self.index,
                     }),

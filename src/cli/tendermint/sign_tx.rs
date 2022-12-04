@@ -61,7 +61,8 @@ impl CliCommand for TendermintSignTx {
                             .tx
                             .msg
                             .iter()
-                            .find_map(|x| Some(x.type_prefix().to_string())),
+                            .map(|x| x.type_prefix().to_string())
+                            .next(),
                         decimals: None,
                     }
                     .into(),

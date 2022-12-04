@@ -134,7 +134,7 @@ impl CliCommand for EthereumSignTx {
         let v: u8 = v.try_into()?;
         assert_eq!(r.len(), 32);
         assert_eq!(s.len(), 32);
-        println!("{}{}{}", hex::encode(r), hex::encode(s), hex::encode(&[v]));
+        println!("{}{}{}", hex::encode(r), hex::encode(s), hex::encode([v]));
 
         Ok(())
     }

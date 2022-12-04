@@ -23,7 +23,7 @@ where
         }
         let mut out_buf = Vec::<u8>::with_capacity(msg.encoded_len());
         msg.encode(&mut out_buf)?;
-        self.write(&mut out_buf, msg.write_timeout())?;
+        self.write(&out_buf, msg.write_timeout())?;
 
         Ok(())
     }

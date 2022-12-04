@@ -42,7 +42,7 @@ impl TryFrom<InputOutput> for BinanceInputOutput {
             coins: x
                 .coins
                 .into_iter()
-                .map(|x| TryInto::<BinanceCoin>::try_into(x))
+                .map(TryInto::<BinanceCoin>::try_into)
                 .collect::<Result<Vec<BinanceCoin>, _>>()?,
             address_type: Some(OutputAddressType::Spend as i32),
         })

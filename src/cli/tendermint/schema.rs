@@ -58,13 +58,13 @@ fn bech32_hrp(x: &str) -> Option<&'_ str> {
 impl Msg {
     pub fn type_prefix(&self) -> &str {
         match self {
-            &Self::CosmosSdkMsgSend { .. } => "cosmos-sdk",
-            &Self::ThorchainMsgSend { .. } => "thorchain",
+            Self::CosmosSdkMsgSend { .. } => "cosmos-sdk",
+            Self::ThorchainMsgSend { .. } => "thorchain",
         }
     }
     pub fn bech32_hrp(&self) -> Option<String> {
         match self {
-            &Self::CosmosSdkMsgSend {
+            Self::CosmosSdkMsgSend {
                 ref to_address,
                 ref from_address,
                 ..
@@ -73,7 +73,7 @@ impl Msg {
                 assert_eq!(out, bech32_hrp(to_address)?);
                 Some(out.to_string())
             }
-            &Self::ThorchainMsgSend {
+            Self::ThorchainMsgSend {
                 ref to_address,
                 ref from_address,
                 ..
@@ -85,9 +85,11 @@ impl Msg {
         }
     }
     pub fn as_message(&self) -> Result<messages::TendermintMsgAck> {
-        let mut out = messages::TendermintMsgAck::default();
-        out.chain_name = self.bech32_hrp();
-        out.message_type_prefix = Some(self.type_prefix().to_string());
+        let mut out = messages::TendermintMsgAck {
+            chain_name: self.bech32_hrp(),
+            message_type_prefix: Some(self.type_prefix().to_string()),
+            ..Default::default()
+        };
         match self {
             Self::CosmosSdkMsgSend {
                 amount,
