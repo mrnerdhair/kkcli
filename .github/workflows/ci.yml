@@ -121,6 +121,7 @@ jobs:
           use-cross: ${{ matrix.triple.cross }}
       - uses: actions/upload-artifact@v3
         with:
+          name: artifact_${{ matrix.triple.os }}_${{ matrix.toolchain }}_${{ matrix.triple.target }}
           if-no-files-found: error
           path: |
             target/${{ matrix.triple.target }}/release/kkcli*
