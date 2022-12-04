@@ -31,7 +31,7 @@ fn main() -> std::io::Result<()> {
     );
     // config.
     let mut config = prost_build::Config::new();
-    config.btree_map(&["."]);
+    config.btree_map(["."]);
     config.compile_protos(
         &[
             "deps/device-protocol/messages-binance.proto",
