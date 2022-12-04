@@ -81,3 +81,57 @@ jobs:
       - uses: actions-rs/audit-check@v1
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
+
+  build:
+    name: ${{ matrix.toolchain }} / ${{ matrix.triple.target }}
+    runs-on: ${{ matrix.triple.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        toolchain:
+          - stable
+        triple:
+          # Tier 1 platforms
+          - { os: 'ubuntu-latest',  target: 'x86_64-unknown-linux-gnu', cross: false }
+          # - { os: 'ubuntu-latest',  target: 'i686-unknown-linux-gnu',   cross: true }
+          - { os: 'macOS-latest',   target: 'x86_64-apple-darwin',      cross: false }
+          - { os: 'windows-latest', target: 'x86_64-pc-windows-msvc',   cross: false }
+
+          # Tier 2 platforms
+
+          ## ARM64
+          # - { os: 'ubuntu-latest', target: 'aarch64-unknown-linux-gnu',  cross: true }
+          # - { os: 'ubuntu-latest', target: 'aarch64-unknown-linux-musl', cross: true }
+          ## ARMv7
+          # - { os: 'ubuntu-latest', target: 'armv7-unknown-linux-gnueabihf',  cross: true }
+          # - { os: 'ubuntu-latest', target: 'armv7-unknown-linux-musleabihf', cross: true }
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: recursive
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: ${{ matrix.toolchain }}
+          override: true
+      - uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args: --target ${{ matrix.triple.target }} --release --all-features
+          use-cross: ${{ matrix.triple.cross }}
+      - uses: actions/upload-artifact@v3
+        with:
+          if-no-files-found: error
+          path: |
+            target/${{ matrix.triple.target }}/release/kkcli*
+            !target/${{ matrix.triple.target }}/release/kkcli.d
+      - uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          draft: true
+          fail_on_unmatched_files: true
+          generate_release_notes: true
+          discussion_category_name: Announcements
+          files: |
+            target/${{ matrix.triple.target }}/release/kkcli*
+            !target/${{ matrix.triple.target }}/release/kkcli.d
