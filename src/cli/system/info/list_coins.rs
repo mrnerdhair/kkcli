@@ -1,6 +1,6 @@
 use crate::{
     cli::{expect_field, expect_message, CliCommand},
-    messages::{self, Message},
+    messages::{self, CoinType, Message},
     transport::ProtocolAdapter,
 };
 use anyhow::Result;
@@ -44,9 +44,10 @@ impl CliCommand for ListCoins {
                 resp.table
             });
 
-        for coin in coin_table {
-            println!("{:?}", coin);
-        }
+        println!(
+            "{}",
+            serde_json::to_string_pretty(&coin_table.collect::<Vec<CoinType>>())?
+        );
 
         Ok(())
     }

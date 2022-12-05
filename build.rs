@@ -31,6 +31,11 @@ fn main() -> std::io::Result<()> {
     );
     // config.
     let mut config = prost_build::Config::new();
+    config.type_attribute(".", "#[::serde_with::serde_as]");
+    config.type_attribute(".", "#[::serde_with::skip_serializing_none]");
+    config.type_attribute(".", "#[derive(::serde::Serialize)]");
+    config.type_attribute(".", "#[serde(rename_all = \"camelCase\")]");
+    config.field_attribute(".CoinType.contract_address", "#[serde_as(as = \"Option<::serde_with::hex::Hex>\")]");
     config.btree_map(["."]);
     config.compile_protos(
         &[
