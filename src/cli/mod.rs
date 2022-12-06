@@ -54,6 +54,7 @@ impl<T: CliCommand> CliDebugCommand for T {
 
 /// Command line tool for working with KeepKey devices
 #[derive(Parser, Debug, Clone)]
+#[clap(version, about)]
 pub struct Cli {
     /// show communication with device
     #[clap(short, long, default_value_t = false, action = SetTrue)]
