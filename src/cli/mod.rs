@@ -89,7 +89,7 @@ use_cli_subcommands! {
     Ping,
     GetFeatures,
     ListCoins,
-    SetLabel,
+    ApplySettings,
     ChangePin,
     ApplyPolicy,
     GetEntropy,
