@@ -31,7 +31,6 @@ impl CliCommand for ApplySettings {
             language: self.language,
             use_passphrase: self.use_passphrase,
             u2f_counter: self.u2f_counter,
-            ..Default::default()
         };
 
         expect_success!(protocol_adapter.with_standard_handler().handle(req.into()))?;
