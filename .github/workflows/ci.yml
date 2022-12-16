@@ -53,6 +53,7 @@ jobs:
           # - { os: 'ubuntu-latest',  target: 'i686-unknown-linux-gnu',   cross: true }
           - { os: 'macOS-latest',   target: 'x86_64-apple-darwin',      cross: false }
           - { os: 'windows-latest', target: 'x86_64-pc-windows-msvc',   cross: false }
+          - { os: 'windows-latest', target: 'i686-pc-windows-msvc',   cross: true }
 
           # Tier 2 platforms
 
