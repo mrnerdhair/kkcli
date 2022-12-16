@@ -96,7 +96,7 @@ impl CliCommand for RecoveryDevice {
                 }
                 _ => {
                     if printed_char_req_msg {
-                        println!("");
+                        println!();
                     }
                     Ok(None)
                 }
