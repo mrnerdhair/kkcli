@@ -1,5 +1,6 @@
 pub mod binance;
 pub mod cosmos;
+pub mod decode;
 pub mod eos;
 pub mod ethereum;
 pub mod list;
@@ -15,6 +16,7 @@ pub mod utxo;
 
 use binance::*;
 use cosmos::*;
+use decode::*;
 use eos::*;
 use ethereum::*;
 use list::*;
@@ -86,6 +88,7 @@ pub struct Cli {
 
 use_cli_subcommands! {
     List,
+    Decode,
     Ping,
     GetFeatures,
     ListCoins,

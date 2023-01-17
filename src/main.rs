@@ -46,23 +46,29 @@ fn main() -> Result<()> {
         Err(x) => panic::resume_unwind(x),
     };
 
-    if let Subcommand::List(_) = cli.command {
-        for device in list_devices().iter() {
-            let device_desc = device.device_descriptor()?;
-            let device_handle = device.open()?;
-            println!(
-                "Bus {:03} Device {:03} ID {:04x}:{:04x}\t\"{}\"\t({})",
-                device.bus_number(),
-                device.address(),
-                device_desc.vendor_id(),
-                device_desc.product_id(),
-                device_handle.read_product_string_ascii(&device_desc)?,
-                device_handle.read_serial_number_string_ascii(&device_desc)?,
-            );
+    match cli.command {
+        Subcommand::List(_) => {
+            for device in list_devices().iter() {
+                let device_desc = device.device_descriptor()?;
+                let device_handle = device.open()?;
+                println!(
+                    "Bus {:03} Device {:03} ID {:04x}:{:04x}\t\"{}\"\t({})",
+                    device.bus_number(),
+                    device.address(),
+                    device_desc.vendor_id(),
+                    device_desc.product_id(),
+                    device_handle.read_product_string_ascii(&device_desc)?,
+                    device_handle.read_serial_number_string_ascii(&device_desc)?,
+                );
+            }
+            return Ok(());
         }
-        return Ok(());
+        Subcommand::Decode(x) => {
+            x.handle()?;
+            return Ok(());
+        }
+        _ => (),
     }
-
     *transport::protocol_adapter::VERBOSE.write().unwrap() = cli.verbose;
 
     let mut transport = UsbTransport::new(get_device()?, 0)?;
