@@ -1,10 +1,13 @@
 use super::Transport;
 use core::{cmp::min, iter::repeat, time::Duration};
-use rusb::{Device, DeviceHandle, UsbContext};
-use std::time::Instant;
+use rusb::{ConfigDescriptor, Device, DeviceHandle, UsbContext};
+use std::{
+    sync::{Arc, Mutex},
+    time::Instant,
+};
 
 pub struct UsbTransport<T: UsbContext> {
-    handle: DeviceHandle<T>,
+    handle: Arc<Mutex<DeviceHandle<T>>>,
     in_endpoint_address: u8,
     out_endpoint_address: u8,
     in_packet_size: usize,
@@ -12,26 +15,50 @@ pub struct UsbTransport<T: UsbContext> {
 }
 
 impl<T: UsbContext> UsbTransport<T> {
-    pub fn new(device: Device<T>, interface_index: usize) -> Result<Self, rusb::Error> {
+    #[allow(clippy::type_complexity)]
+    pub fn new(
+        device: &Device<T>,
+        interface_index: usize,
+    ) -> Result<(Self, ConfigDescriptor, Arc<Mutex<DeviceHandle<T>>>), rusb::Error> {
         let config_descriptor = device.active_config_descriptor().unwrap();
-        let mut handle = device.open()?;
-        handle.reset()?;
+        let mut handle = Arc::new(Mutex::new(device.open()?));
+
+        let handle_mut = Arc::get_mut(&mut handle).unwrap().get_mut().unwrap();
+        handle_mut.reset()?;
 
         // Detaching the kernel driver is required to access HID devices on Mac OS and Linux.
-        match handle.set_auto_detach_kernel_driver(true) {
+        match handle_mut.set_auto_detach_kernel_driver(true) {
             Err(rusb::Error::NotSupported) => Ok(()),
             x => x,
         }?;
+
+        Ok((
+            Self::new_from_descriptor_and_handle(
+                &config_descriptor,
+                Arc::clone(&handle),
+                interface_index,
+            )?,
+            config_descriptor,
+            handle,
+        ))
+    }
+
+    pub fn new_from_descriptor_and_handle(
+        config_descriptor: &ConfigDescriptor,
+        handle: Arc<Mutex<DeviceHandle<T>>>,
+        interface_index: usize,
+    ) -> Result<Self, rusb::Error> {
+        let mut handle_mut = handle.lock().unwrap();
 
         let interface = config_descriptor
             .interfaces()
             .nth(interface_index)
             .ok_or(rusb::Error::NotFound)?;
-        handle.claim_interface(interface.number()).unwrap();
+        handle_mut.claim_interface(interface.number()).unwrap();
 
         let mut interface_descriptors = interface.descriptors();
         let interface_descriptor = interface_descriptors.next().ok_or(rusb::Error::NotFound)?;
-        handle.set_alternate_setting(interface.number(), 0)?;
+        handle_mut.set_alternate_setting(interface.number(), 0)?;
 
         let mut endpoint_descriptors = interface_descriptor.endpoint_descriptors();
 
@@ -49,6 +76,8 @@ impl<T: UsbContext> UsbTransport<T> {
             rusb::TransferType::Interrupt
         );
 
+        drop(handle_mut);
+
         Ok(Self {
             handle,
             in_endpoint_address: in_endpoint_descriptor.address(),
@@ -57,11 +86,14 @@ impl<T: UsbContext> UsbTransport<T> {
             out_packet_size: out_endpoint_descriptor.max_packet_size().into(),
         })
     }
+
     fn read_packet(&self, buf: &mut Vec<u8>, timeout: Duration) -> Result<(), rusb::Error> {
         let mut packet = vec![0u8; self.in_packet_size];
-        let len = self
-            .handle
-            .read_interrupt(self.in_endpoint_address, &mut packet, timeout)?;
+        let len = self.handle.lock().unwrap().read_interrupt(
+            self.in_endpoint_address,
+            &mut packet,
+            timeout,
+        )?;
         assert_eq!(
             len,
             self.in_packet_size,
@@ -97,7 +129,7 @@ impl<T: UsbContext> Transport for UsbTransport<T> {
             packet.extend(repeat(0).take(self.out_packet_size - packet.len()));
             debug_assert_eq!(packet.len(), self.out_packet_size);
 
-            let written_len = self.handle.write_interrupt(
+            let written_len = self.handle.lock().unwrap().write_interrupt(
                 self.out_endpoint_address,
                 &packet,
                 since!(started, timeout)?,
@@ -138,10 +170,11 @@ impl<T: UsbContext> Transport for UsbTransport<T> {
         const RESET_TIMEOUT: Duration = Duration::from_millis(10);
         let mut buf = vec![0u8; self.in_packet_size];
         loop {
-            match self
-                .handle
-                .read_interrupt(self.in_endpoint_address, &mut buf, RESET_TIMEOUT)
-            {
+            match self.handle.lock().unwrap().read_interrupt(
+                self.in_endpoint_address,
+                &mut buf,
+                RESET_TIMEOUT,
+            ) {
                 Ok(0) => return Ok(()),
                 Ok(_) => (),
                 Err(rusb::Error::Timeout) => return Ok(()),

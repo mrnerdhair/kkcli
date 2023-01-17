@@ -71,8 +71,10 @@ fn main() -> Result<()> {
     }
     *transport::protocol_adapter::VERBOSE.write().unwrap() = cli.verbose;
 
-    let mut transport = UsbTransport::new(get_device()?, 0)?;
-    let mut debug_transport = UsbTransport::new(get_device()?, 1).ok();
+    let device = get_device()?;
+    let (mut transport, config_descriptor, handle) = UsbTransport::new(&device, 0)?;
+    let mut debug_transport =
+        UsbTransport::new_from_descriptor_and_handle(&config_descriptor, handle, 1).ok();
 
     cli.handle_debug(
         &mut transport,
